@@ -1,24 +1,24 @@
-const express = require("express");
-const mongoose = require("mongoose");
-const cors = require("cors");
-require("dotenv").config();
-
-const authRoutes = require("./routes/authRoutes");
-const capsuleRoutes = require("./routes/capsuleRoutes");
+require('dotenv').config();
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
 
 const app = express();
-app.use(cors());
 app.use(express.json());
+app.use(cors());
 
-// RUTAS
-app.use("/api/auth", authRoutes);
-app.use("/api/capsules", capsuleRoutes);
+// Verificar que la variable de entorno se está leyendo
+console.log("MONGO_URI =", process.env.MONGO_URI);
 
-// CONEXIÓN A MONGO
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => {
-    console.log("Connected to MongoDB");
-    app.listen(5000, () => console.log("Server running on port 5000"));
-  })
-  .catch((err) => console.log(err));
+// Conexión a MongoDB Atlas (sin opciones obsoletas)
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("🔥 MongoDB conectado correctamente"))
+  .catch(err => console.error("❌ Error conectando a MongoDB:", err));
+
+// Rutas
+app.use('/api/capsules', require('./routes/capsuleRoutes'));
+app.use('/api/users', require('./routes/authRoutes'));
+
+// Puerto
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`🚀 Servidor corriendo en puerto ${PORT}`));
