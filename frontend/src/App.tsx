@@ -11,15 +11,15 @@ import './styles/app.css'
 
 function AppLayout() {
   const location = useLocation()
-  const hideNavbar = location.pathname === '/login' || location.pathname === '/registro'
+  const hideNavbar = ['/', '/inicio-publico', '/login', '/registro'].includes(location.pathname)
 
   return (
     <div className="app-shell">
       {!hideNavbar && <Navbar />}
       <main className={`app-content ${hideNavbar ? 'app-content--auth' : ''}`}>
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/carga-inicial" element={<InitialLoading />} />
+          <Route path="/" element={<InitialLoading />} />
+          <Route path="/inicio-publico" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/registro" element={<Register />} />
           <Route path="/dashboard" element={<Dashboard />} />
