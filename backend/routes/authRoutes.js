@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 const { body, validationResult } = require('express-validator');
 const User = require("../models/user");
+const auth = require("../middleware/authMiddleware");
 const router = express.Router();
 
 function isDbConnected() {
@@ -18,6 +19,37 @@ router.get("/", async (req, res) => {
 
   try {
     const users = await User.find({}, "-password");
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Search users for friend picker
+router.get("/search", auth, async (req, res) => {
+  if (!isDbConnected()) {
+    return res.status(503).json({ message: "Database unavailable" });
+  }
+
+  const query = String(req.query.q || "").trim();
+  if (query.length < 2) {
+    return res.status(400).json({ message: "Query must have at least 2 characters" });
+  }
+
+  try {
+    const safe = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(safe, "i");
+
+    const users = await User.find(
+      {
+        _id: { $ne: req.user.id },
+        $or: [{ name: regex }, { email: regex }],
+      },
+      "name email avatar"
+    )
+      .sort({ name: 1 })
+      .limit(15);
+
     res.json(users);
   } catch (error) {
     res.status(500).json({ message: "Server error" });
