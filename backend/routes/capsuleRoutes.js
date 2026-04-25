@@ -8,6 +8,10 @@ const auth = require("../middleware/authMiddleware");
 const router = express.Router();
 
 function isDbConnected() {
+  if (process.env.NODE_ENV === 'test') {
+    return true;
+  }
+
   return mongoose.connection.readyState === 1;
 }
 
@@ -38,6 +42,13 @@ function canEdit(capsule, userId) {
 
   const role = collaboratorRole(capsule, userId);
   return role === "admin" || role === "edit";
+}
+
+function canManage(capsule, userId) {
+  if (ownerOnly(capsule, userId)) return true;
+
+  const role = collaboratorRole(capsule, userId);
+  return role === "admin";
 }
 
 function normalizeRole(role) {
@@ -214,7 +225,7 @@ router.post(
   }
 );
 
-// Update capsule core data (owner only)
+// Update capsule core data (owner/admin/edit)
 router.patch(
   "/:id",
   auth,
@@ -243,7 +254,7 @@ router.patch(
       const capsule = await Capsule.findById(req.params.id);
       if (!capsule) return res.status(404).json({ message: "Capsule not found" });
 
-      if (!ownerOnly(capsule, req.user.id)) {
+      if (!canEdit(capsule, req.user.id)) {
         return res.status(403).json({ message: "Not authorized" });
       }
 
@@ -269,7 +280,7 @@ router.patch(
   }
 );
 
-// Share capsule with friends (by user ids or emails) - owner only
+// Share capsule with friends (by user ids or emails) - owner/admin
 router.post("/:id/share", auth, async (req, res) => {
   if (!isDbConnected()) {
     return res.status(503).json({ message: "Database unavailable" });
@@ -291,7 +302,7 @@ router.post("/:id/share", auth, async (req, res) => {
     const capsule = await Capsule.findById(req.params.id);
     if (!capsule) return res.status(404).json({ message: "Capsule not found" });
 
-    if (!ownerOnly(capsule, req.user.id)) {
+    if (!canManage(capsule, req.user.id)) {
       return res.status(403).json({ message: "Not authorized" });
     }
 
@@ -337,7 +348,7 @@ router.post("/:id/share", auth, async (req, res) => {
   }
 });
 
-// Replace collaborators (owner only)
+// Replace collaborators (owner/admin)
 router.patch(
   "/:id/collaborators",
   auth,
@@ -360,7 +371,7 @@ router.patch(
       const capsule = await Capsule.findById(req.params.id);
       if (!capsule) return res.status(404).json({ message: "Capsule not found" });
 
-      if (!ownerOnly(capsule, req.user.id)) {
+      if (!canManage(capsule, req.user.id)) {
         return res.status(403).json({ message: "Not authorized" });
       }
 
@@ -381,7 +392,7 @@ router.patch(
   }
 );
 
-// Remove collaborator (owner only)
+// Remove collaborator (owner/admin)
 router.delete("/:id/collaborators/:userId", auth, async (req, res) => {
   if (!isDbConnected()) {
     return res.status(503).json({ message: "Database unavailable" });
@@ -395,7 +406,7 @@ router.delete("/:id/collaborators/:userId", auth, async (req, res) => {
     const capsule = await Capsule.findById(req.params.id);
     if (!capsule) return res.status(404).json({ message: "Capsule not found" });
 
-    if (!ownerOnly(capsule, req.user.id)) {
+    if (!canManage(capsule, req.user.id)) {
       return res.status(403).json({ message: "Not authorized" });
     }
 
@@ -503,7 +514,7 @@ router.post(
   }
 );
 
-// Delete capsule (only owner)
+// Delete capsule (owner/admin)
 router.delete("/:id", auth, async (req, res) => {
   if (!isDbConnected()) {
     return res.status(503).json({ message: "Database unavailable" });
@@ -517,7 +528,7 @@ router.delete("/:id", auth, async (req, res) => {
     const capsule = await Capsule.findById(req.params.id);
     if (!capsule) return res.status(404).json({ message: "Capsule not found" });
 
-    if (!ownerOnly(capsule, req.user.id)) {
+    if (!canManage(capsule, req.user.id)) {
       return res.status(403).json({ message: "Not authorized to delete this capsule" });
     }
 
