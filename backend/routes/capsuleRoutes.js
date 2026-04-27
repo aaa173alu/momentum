@@ -51,6 +51,10 @@ function canManage(capsule, userId) {
   return role === "admin";
 }
 
+function canModerateComments(capsule, userId) {
+  return canManage(capsule, userId);
+}
+
 function normalizeRole(role) {
   if (role === "admin" || role === "edit" || role === "view") return role;
   return "view";
@@ -112,6 +116,38 @@ async function findAccessibleCapsule(capsuleId, userId) {
   return Capsule.findOne({ _id: capsuleId, ...accessQuery(userId) });
 }
 
+function parsePositiveInteger(value, fallback) {
+  if (value === undefined) return fallback;
+
+  const parsed = Number.parseInt(String(value), 10);
+  if (!Number.isFinite(parsed) || parsed < 0) return fallback;
+
+  return parsed;
+}
+
+function sliceMediaComments(capsule, limit, offset) {
+  const plainCapsule = typeof capsule.toObject === "function" ? capsule.toObject() : JSON.parse(JSON.stringify(capsule));
+
+  plainCapsule.mediaItems = (plainCapsule.mediaItems || []).map((media) => {
+    const comments = Array.isArray(media.comments) ? media.comments : [];
+    const total = comments.length;
+    const slicedComments = comments.slice(offset, offset + limit);
+
+    return {
+      ...media,
+      comments: slicedComments,
+      commentsMeta: {
+        limit,
+        offset,
+        total,
+        hasMore: offset + slicedComments.length < total,
+      },
+    };
+  });
+
+  return plainCapsule;
+}
+
 // Get capsules that the user owns or has shared access to
 router.get("/", auth, async (req, res) => {
   if (!isDbConnected()) {
@@ -142,14 +178,26 @@ router.get("/:id", auth, async (req, res) => {
   }
 
   try {
-    const capsule = await findAccessibleCapsule(req.params.id, req.user.id)
-      .populate("owner", "name email avatar")
-      .populate("sharedWith", "name email avatar")
-      .populate("collaborators.user", "name email avatar")
-      .populate("mediaItems.comments.author", "name email avatar");
-
+    const capsule = await findAccessibleCapsule(req.params.id, req.user.id);
     if (!capsule) return res.status(404).json({ message: "Capsule not found" });
-    res.json(capsule);
+
+    if (typeof capsule.populate === "function") {
+      await capsule
+        .populate("owner", "name email avatar")
+        .populate("sharedWith", "name email avatar")
+        .populate("collaborators.user", "name email avatar")
+        .populate("mediaItems.comments.author", "name email avatar");
+    }
+
+    const hasCommentPagination = req.query.commentsLimit !== undefined || req.query.commentsOffset !== undefined;
+    if (!hasCommentPagination) {
+      return res.json(capsule);
+    }
+
+    const commentsLimit = parsePositiveInteger(req.query.commentsLimit, 20);
+    const commentsOffset = parsePositiveInteger(req.query.commentsOffset, 0);
+
+    res.json(sliceMediaComments(capsule, commentsLimit, commentsOffset));
   } catch (error) {
     res.status(500).json({ message: "Server error" });
   }
@@ -513,6 +561,46 @@ router.post(
     }
   }
 );
+
+// Delete a comment from a media item (comment author, owner or admin)
+router.delete("/:id/media/:mediaId/comments/:commentId", auth, async (req, res) => {
+  if (!isDbConnected()) {
+    return res.status(503).json({ message: "Database unavailable" });
+  }
+
+  if (!isValidObjectId(req.params.id) || !isValidObjectId(req.params.mediaId) || !isValidObjectId(req.params.commentId)) {
+    return res.status(400).json({ message: "Invalid id" });
+  }
+
+  try {
+    const capsule = await findAccessibleCapsule(req.params.id, req.user.id);
+    if (!capsule) return res.status(404).json({ message: "Capsule not found" });
+
+    const media = capsule.mediaItems.id(req.params.mediaId);
+    if (!media) return res.status(404).json({ message: "Media item not found" });
+
+    const comment = media.comments.id(req.params.commentId);
+    if (!comment) return res.status(404).json({ message: "Comment not found" });
+
+    const isAuthor = String(comment.author) === String(req.user.id);
+    if (!isAuthor && !canModerateComments(capsule, req.user.id)) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    comment.deleteOne();
+    await capsule.save();
+
+    const populated = await Capsule.findById(capsule._id)
+      .populate("owner", "name email avatar")
+      .populate("sharedWith", "name email avatar")
+      .populate("collaborators.user", "name email avatar")
+      .populate("mediaItems.comments.author", "name email avatar");
+
+    res.json(populated);
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
 
 // Delete capsule (owner/admin)
 router.delete("/:id", auth, async (req, res) => {

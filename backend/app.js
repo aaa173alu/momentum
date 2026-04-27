@@ -1,9 +1,12 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 
 const app = express();
 app.use(express.json());
 app.use(cors());
+
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.get('/health', (req, res) => {
   res.json({ ok: true });
@@ -12,6 +15,8 @@ app.get('/health', (req, res) => {
 // Rutas
 app.use('/api/capsules', require('./routes/capsuleRoutes'));
 app.use('/api/users', require('./routes/authRoutes'));
+app.use('/api/uploads', require('./routes/uploadRoutes'));
+app.use('/api/friends', require('./routes/friendRoutes'));
 
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);
