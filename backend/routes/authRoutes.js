@@ -27,6 +27,10 @@ function userResponse(user) {
     email: user.email,
     profilePhoto: user.profilePhoto || user.avatar || "",
     avatar: user.avatar || user.profilePhoto || "",
+    biography: user.biography || "",
+    birthDate: user.birthDate || null,
+    country: user.country || "",
+    gender: user.gender || 'prefer_not_say',
     preferences: user.preferences,
     createdAt: user.createdAt,
   };
@@ -165,6 +169,10 @@ router.patch(
     body("email").optional().isEmail().withMessage("Valid email is required").normalizeEmail(),
     body("profilePhoto").optional().isString().withMessage("profilePhoto must be a string"),
     body("avatar").optional().isString().withMessage("avatar must be a string"),
+    body("biography").optional().isString().withMessage("biography must be a string"),
+    body("birthDate").optional({ nullable: true }).isISO8601().withMessage("Invalid birthDate"),
+    body("country").optional().isString().withMessage("country must be a string"),
+    body("gender").optional().isIn(["male", "female", "other", "prefer_not_say"]).withMessage("Invalid gender"),
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -196,6 +204,11 @@ router.patch(
         user.avatar = req.body.avatar;
         user.profilePhoto = req.body.avatar;
       }
+
+      if (req.body.biography !== undefined) user.biography = req.body.biography;
+      if (req.body.birthDate !== undefined) user.birthDate = req.body.birthDate ? new Date(req.body.birthDate) : null;
+      if (req.body.country !== undefined) user.country = req.body.country;
+      if (req.body.gender !== undefined) user.gender = req.body.gender;
 
       await user.save();
       res.json(userResponse(user));
@@ -492,6 +505,10 @@ router.post(
     body('name').trim().notEmpty().withMessage('Name is required'),
     body('email').isEmail().withMessage('Valid email is required').normalizeEmail(),
     body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters'),
+    body('biography').optional().isString().withMessage('biography must be a string'),
+    body('birthDate').optional({ nullable: true }).isISO8601().withMessage('Invalid birthDate'),
+    body('country').optional().isString().withMessage('country must be a string'),
+    body('gender').optional().isIn(['male','female','other','prefer_not_say']).withMessage('Invalid gender'),
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -511,7 +528,15 @@ router.post(
 
       const hashed = await bcrypt.hash(password, 10);
 
-      const user = await User.create({ name, email, password: hashed });
+      const user = await User.create({
+        name,
+        email,
+        password: hashed,
+        biography: req.body.biography ?? "",
+        birthDate: req.body.birthDate ? new Date(req.body.birthDate) : null,
+        country: req.body.country ?? "",
+        gender: req.body.gender ?? 'prefer_not_say',
+      });
 
       res.status(201).json(userResponse(user));
     } catch (error) {

@@ -8,14 +8,7 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, uploadsDir),
-  filename: (_req, file, cb) => {
-    const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
-    const uniquePrefix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    cb(null, `${uniquePrefix}-${safeName}`);
-  },
-});
+const S3_BUCKET = process.env.S3_BUCKET || null;
 
 function fileFilter(_req, file, cb) {
   const allowedMimeTypes = new Set([
@@ -39,15 +32,34 @@ function fileFilter(_req, file, cb) {
   return cb(new Error('Unsupported file type'));
 }
 
-const upload = multer({
-  storage,
-  fileFilter,
-  limits: {
-    fileSize: 50 * 1024 * 1024,
-  },
-});
+let upload;
+let useS3 = false;
+
+if (S3_BUCKET) {
+  // Use memory storage when uploading to S3 so we can process buffers
+  const storage = multer.memoryStorage();
+  upload = multer({
+    storage,
+    fileFilter,
+    limits: { fileSize: 50 * 1024 * 1024 },
+  });
+  useS3 = true;
+} else {
+  const storage = multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, uploadsDir),
+    filename: (_req, file, cb) => {
+      const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const uniquePrefix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+      cb(null, `${uniquePrefix}-${safeName}`);
+    },
+  });
+
+  upload = multer({ storage, fileFilter, limits: { fileSize: 50 * 1024 * 1024 } });
+}
 
 module.exports = {
   upload,
   uploadsDir,
+  useS3,
+  S3_BUCKET,
 };

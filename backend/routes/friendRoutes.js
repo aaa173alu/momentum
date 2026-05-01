@@ -200,11 +200,36 @@ router.get('/', auth, async (req, res) => {
   }
 
   try {
-    const relations = await FriendRelation.find({
-      status: 'accepted',
-      $or: [{ requester: req.user.id }, { recipient: req.user.id }],
-    })
+    const q = String(req.query.q || '').trim();
+    const limit = Number.isFinite(Number(req.query.limit)) ? Math.max(0, Number(req.query.limit)) : 20;
+    const offset = Number.isFinite(Number(req.query.offset)) ? Math.max(0, Number(req.query.offset)) : 0;
+
+    const baseQuery = { status: 'accepted' };
+
+    // If there's a q param, resolve matching users and filter by the other user
+    if (q.length >= 2) {
+      const safe = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const regex = new RegExp(safe, 'i');
+
+      const matchedUsers = await User.find({
+        $or: [{ name: regex }, { email: regex }],
+      }, '_id');
+
+      const ids = matchedUsers.map((u) => String(u._id));
+
+      // Build query to match relations where the other user is in ids
+      baseQuery.$or = [
+        { requester: req.user.id, recipient: { $in: ids } },
+        { recipient: req.user.id, requester: { $in: ids } },
+      ];
+    } else {
+      baseQuery.$or = [{ requester: req.user.id }, { recipient: req.user.id }];
+    }
+
+    const relations = await FriendRelation.find(baseQuery)
       .sort({ updatedAt: -1 })
+      .skip(offset)
+      .limit(Math.min(limit, 100))
       .populate('requester', 'name email avatar profilePhoto')
       .populate('recipient', 'name email avatar profilePhoto');
 

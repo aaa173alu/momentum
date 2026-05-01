@@ -155,8 +155,35 @@ router.get("/", auth, async (req, res) => {
   }
 
   try {
-    const capsules = await Capsule.find(accessQuery(req.user.id))
+    const q = String(req.query.q || "").trim();
+    const category = req.query.category;
+    const dateFrom = req.query.dateFrom ? new Date(req.query.dateFrom) : null;
+    const dateTo = req.query.dateTo ? new Date(req.query.dateTo) : null;
+
+    const limit = parsePositiveInteger(req.query.limit, 20);
+    const offset = parsePositiveInteger(req.query.offset, 0);
+
+    const mongoQuery = { ...accessQuery(req.user.id) };
+
+    if (q.length >= 2) {
+      const safe = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const regex = new RegExp(safe, 'i');
+      mongoQuery.$and = mongoQuery.$and || [];
+      mongoQuery.$and.push({ $or: [{ title: regex }, { description: regex }, { category: regex }] });
+    }
+
+    if (category) mongoQuery.category = String(category);
+
+    if (dateFrom || dateTo) {
+      mongoQuery.date = mongoQuery.date || {};
+      if (dateFrom) mongoQuery.date.$gte = dateFrom;
+      if (dateTo) mongoQuery.date.$lte = dateTo;
+    }
+
+    const capsules = await Capsule.find(mongoQuery)
       .sort({ updatedAt: -1 })
+      .skip(offset)
+      .limit(Math.min(limit, 100))
       .populate("owner", "name email avatar")
       .populate("sharedWith", "name email avatar")
       .populate("collaborators.user", "name email avatar");
@@ -164,6 +191,74 @@ router.get("/", auth, async (req, res) => {
     res.json(capsules);
   } catch (error) {
     res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Search capsules with filters: q (text), category, date range, location (lat,lng,radiusKm), pagination
+router.get('/search', auth, async (req, res) => {
+  if (!isDbConnected()) {
+    return res.status(503).json({ message: 'Database unavailable' });
+  }
+
+  try {
+    const q = String(req.query.q || '').trim();
+    const category = req.query.category;
+    const dateFrom = req.query.dateFrom ? new Date(req.query.dateFrom) : null;
+    const dateTo = req.query.dateTo ? new Date(req.query.dateTo) : null;
+
+    const limit = parsePositiveInteger(req.query.limit, 20);
+    const offset = parsePositiveInteger(req.query.offset, 0);
+
+    const mongoQuery = { ...accessQuery(req.user.id) };
+
+    if (q.length >= 2) {
+      const safe = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const regex = new RegExp(safe, 'i');
+      mongoQuery.$and = mongoQuery.$and || [];
+      mongoQuery.$and.push({ $or: [{ title: regex }, { description: regex }, { category: regex }] });
+    }
+
+    if (category) mongoQuery.category = String(category);
+
+    if (dateFrom || dateTo) {
+      mongoQuery.date = mongoQuery.date || {};
+      if (dateFrom) mongoQuery.date.$gte = dateFrom;
+      if (dateTo) mongoQuery.date.$lte = dateTo;
+    }
+
+    // Geolocation search (lat, lng, radiusKm)
+    const lat = req.query.lat ? Number(req.query.lat) : null;
+    const lng = req.query.lng ? Number(req.query.lng) : null;
+    const radiusKm = req.query.radiusKm ? Number(req.query.radiusKm) : null;
+
+    let cursor;
+
+    if (lat !== null && lng !== null && Number.isFinite(radiusKm)) {
+      const maxDistance = Math.max(0, Number(radiusKm)) * 1000; // meters
+      cursor = Capsule.find({
+        ...mongoQuery,
+        location: {
+          $nearSphere: {
+            $geometry: { type: 'Point', coordinates: [lng, lat] },
+            $maxDistance: maxDistance,
+          },
+        },
+      });
+    } else {
+      cursor = Capsule.find(mongoQuery);
+    }
+
+    const capsules = await cursor
+      .sort({ updatedAt: -1 })
+      .skip(offset)
+      .limit(Math.min(limit, 100))
+      .populate('owner', 'name email avatar')
+      .populate('sharedWith', 'name email avatar')
+      .populate('collaborators.user', 'name email avatar');
+
+    res.json(capsules);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
   }
 });
 

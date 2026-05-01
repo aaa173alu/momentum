@@ -51,6 +51,18 @@ const capsuleSchema = new mongoose.Schema(
       enabled: { type: Boolean, default: false },
       unlockAt: { type: Date, default: null },
     },
+    location: {
+      type: {
+        type: String,
+        enum: ['Point'],
+        default: 'Point',
+      },
+      coordinates: {
+        type: [Number],
+        default: undefined,
+      },
+      label: { type: String, trim: true, default: '' },
+    },
     owner: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     sharedWith: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     collaborators: [collaboratorSchema],
@@ -66,3 +78,10 @@ const capsuleSchema = new mongoose.Schema(
 );
 
 module.exports = mongoose.model("Capsule", capsuleSchema);
+
+// Add geospatial index for location if not already present
+try {
+  capsuleSchema.index({ location: '2dsphere' });
+} catch (e) {
+  // ignore indexing errors at import time
+}

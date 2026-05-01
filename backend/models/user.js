@@ -6,6 +6,14 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   profilePhoto: { type: String, default: "" },
   avatar: { type: String, default: "" },
+  biography: { type: String, trim: true, default: "" },
+  birthDate: { type: Date, default: null },
+  country: { type: String, trim: true, default: "" },
+  gender: {
+    type: String,
+    enum: ['male', 'female', 'other', 'prefer_not_say'],
+    default: 'prefer_not_say',
+  },
   preferences: {
     theme: { type: String, enum: ["light", "dark", "system"], default: "light" },
     language: { type: String, enum: ["es", "en"], default: "es" },
