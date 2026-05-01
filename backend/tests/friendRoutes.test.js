@@ -25,6 +25,16 @@ jest.mock('../models/friendRelation', () => {
   return FriendRelation;
 });
 
+jest.mock('../models/notification', () => ({
+  create: jest.fn().mockResolvedValue({
+    _id: '507f191e810c19729de860ed',
+    recipient: '507f191e810c19729de860eb',
+    actor: '507f191e810c19729de860ea',
+    type: 'friend_accepted',
+    read: false,
+  }),
+}));
+
 const User = require('../models/user');
 const FriendRelation = require('../models/friendRelation');
 const app = require('../app');

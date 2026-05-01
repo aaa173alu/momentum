@@ -4,6 +4,7 @@ const { body, validationResult } = require('express-validator');
 const auth = require('../middleware/authMiddleware');
 const User = require('../models/user');
 const FriendRelation = require('../models/friendRelation');
+const { notifyFriendRequest, notifyFriendAccepted } = require('../services/notificationService');
 
 const router = express.Router();
 
@@ -111,6 +112,9 @@ router.post(
         reverseExisting.status = 'accepted';
         await reverseExisting.save();
 
+        // Notify the requester that their friend request was accepted
+        await notifyFriendAccepted(reverseExisting.requester, req.user.id, reverseExisting._id);
+
         const populated = await FriendRelation.findById(reverseExisting._id)
           .populate('requester', 'name email avatar profilePhoto')
           .populate('recipient', 'name email avatar profilePhoto');
@@ -137,6 +141,9 @@ router.post(
 
       await relation.save();
 
+      // Notify the recipient about the friend request
+      await notifyFriendRequest(userId, req.user.id, relation._id);
+
       const populated = await FriendRelation.findById(relation._id)
         .populate('requester', 'name email avatar profilePhoto')
         .populate('recipient', 'name email avatar profilePhoto');
@@ -148,7 +155,7 @@ router.post(
     } catch (error) {
       res.status(500).json({ message: 'Server error' });
     }
-  }
+  },
 );
 
 // Incoming friend requests
@@ -208,7 +215,7 @@ router.get('/', auth, async (req, res) => {
 
     // If there's a q param, resolve matching users and filter by the other user
     if (q.length >= 2) {
-      const safe = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const safe = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const regex = new RegExp(safe, 'i');
 
       const matchedUsers = await User.find({
@@ -268,6 +275,9 @@ router.post('/requests/:requestId/accept', auth, async (req, res) => {
 
     relation.status = 'accepted';
     await relation.save();
+
+    // Notify the requester that their friend request was accepted
+    await notifyFriendAccepted(relation.requester, req.user.id, relation._id);
 
     const populated = await FriendRelation.findById(relation._id)
       .populate('requester', 'name email avatar profilePhoto')

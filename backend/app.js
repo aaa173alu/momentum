@@ -17,6 +17,7 @@ app.use('/api/capsules', require('./routes/capsuleRoutes'));
 app.use('/api/users', require('./routes/authRoutes'));
 app.use('/api/uploads', require('./routes/uploadRoutes'));
 app.use('/api/friends', require('./routes/friendRoutes'));
+app.use('/api/notifications', require('./routes/notificationRoutes'));
 
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);

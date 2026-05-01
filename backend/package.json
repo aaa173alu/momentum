@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon server.js",
-    "test": "jest --runInBand"
+    "test": "jest --runInBand",
+    "lint": "eslint . --ignore-pattern node_modules --ignore-pattern uploads"
   },
   "keywords": [],
   "author": "",

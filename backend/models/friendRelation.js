@@ -2,9 +2,15 @@ const mongoose = require('mongoose');
 
 const friendRelationSchema = new mongoose.Schema(
   {
-    requester: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
-    recipient: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
-    pairKey: { type: String, required: true, unique: true, index: true },
+    requester: {
+      type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true,
+    },
+    recipient: {
+      type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true,
+    },
+    pairKey: {
+      type: String, required: true, unique: true, index: true,
+    },
     status: {
       type: String,
       enum: ['pending', 'accepted', 'blocked'],
@@ -13,7 +19,7 @@ const friendRelationSchema = new mongoose.Schema(
     },
     blockedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 module.exports = mongoose.model('FriendRelation', friendRelationSchema);

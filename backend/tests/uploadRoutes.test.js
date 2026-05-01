@@ -6,22 +6,20 @@ const path = require('path');
 const request = require('supertest');
 const jwt = require('jsonwebtoken');
 
-jest.mock('../middleware/authMiddleware', () => {
-  return (req, res, next) => {
-    const mockJwt = require('jsonwebtoken');
-    const authHeader = req.headers.authorization || '';
-    const token = authHeader.split(' ')[1];
-    if (!token) {
-      return res.status(401).json({ message: 'No token' });
-    }
+jest.mock('../middleware/authMiddleware', () => (req, res, next) => {
+  const mockJwt = require('jsonwebtoken');
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.split(' ')[1];
+  if (!token) {
+    return res.status(401).json({ message: 'No token' });
+  }
 
-    try {
-      req.user = mockJwt.verify(token, process.env.JWT_SECRET);
-      next();
-    } catch (error) {
-      return res.status(401).json({ message: 'Invalid token' });
-    }
-  };
+  try {
+    req.user = mockJwt.verify(token, process.env.JWT_SECRET);
+    next();
+  } catch (error) {
+    return res.status(401).json({ message: 'Invalid token' });
+  }
 });
 
 const app = require('../app');

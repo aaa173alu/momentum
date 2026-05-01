@@ -12,11 +12,15 @@ let s3Client = null;
 let Sharp = null;
 if (useS3) {
   try {
-    const { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } = require('@aws-sdk/client-s3');
+    const {
+      S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand,
+    } = require('@aws-sdk/client-s3');
     const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
     s3Client = new S3Client({});
     router.locals = router.locals || {};
-    router.locals.S3 = { PutObjectCommand, DeleteObjectCommand, GetObjectCommand, getSignedUrl };
+    router.locals.S3 = {
+      PutObjectCommand, DeleteObjectCommand, GetObjectCommand, getSignedUrl,
+    };
     Sharp = require('sharp');
   } catch (e) {
     // if dependencies missing, fall back to disk behavior
@@ -73,7 +77,7 @@ router.post('/media/presign-upload', auth, async (req, res) => {
   const key = folder ? `${folder}/${uniquePrefix}-${fileName}` : `${uniquePrefix}-${fileName}`;
   const expiresIn = Math.min(
     Number.parseInt(process.env.S3_PRESIGN_EXPIRES || `${DEFAULT_PRESIGN_EXPIRES}`, 10) || DEFAULT_PRESIGN_EXPIRES,
-    3600
+    3600,
   );
 
   try {
@@ -111,7 +115,7 @@ router.get('/media/presign-download', auth, async (req, res) => {
 
   const expiresIn = Math.min(
     Number.parseInt(process.env.S3_PRESIGN_EXPIRES || `${DEFAULT_PRESIGN_EXPIRES}`, 10) || DEFAULT_PRESIGN_EXPIRES,
-    3600
+    3600,
   );
 
   try {
@@ -141,7 +145,7 @@ router.post('/media', auth, upload.single('file'), async (req, res) => {
       const uniquePrefix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
       const key = `${uniquePrefix}-${originalName}`;
 
-      const PutObjectCommand = router.locals.S3.PutObjectCommand;
+      const { PutObjectCommand } = router.locals.S3;
 
       await s3Client.send(new PutObjectCommand({
         Bucket: S3_BUCKET,
@@ -203,7 +207,7 @@ router.delete('/media/:fileName', auth, async (req, res) => {
 
   if (useS3 && s3Client) {
     try {
-      const DeleteObjectCommand = router.locals.S3.DeleteObjectCommand;
+      const { DeleteObjectCommand } = router.locals.S3;
       await s3Client.send(new DeleteObjectCommand({ Bucket: S3_BUCKET, Key: safeName }));
       return res.json({ message: 'File deleted' });
     } catch (error) {

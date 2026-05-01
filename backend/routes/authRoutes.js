@@ -1,15 +1,16 @@
-const express = require("express");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const crypto = require("crypto");
-const mongoose = require("mongoose");
+const express = require('express');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+const mongoose = require('mongoose');
 const { body, validationResult } = require('express-validator');
-const User = require("../models/user");
-const RefreshToken = require("../models/refreshToken");
-const auth = require("../middleware/authMiddleware");
+const User = require('../models/user');
+const RefreshToken = require('../models/refreshToken');
+const auth = require('../middleware/authMiddleware');
+
 const router = express.Router();
 
-const ACCESS_TOKEN_TTL = "15m";
+const ACCESS_TOKEN_TTL = '15m';
 const REFRESH_TOKEN_TTL_DAYS = 30;
 
 function isDbConnected() {
@@ -25,11 +26,11 @@ function userResponse(user) {
     _id: user._id,
     name: user.name,
     email: user.email,
-    profilePhoto: user.profilePhoto || user.avatar || "",
-    avatar: user.avatar || user.profilePhoto || "",
-    biography: user.biography || "",
+    profilePhoto: user.profilePhoto || user.avatar || '',
+    avatar: user.avatar || user.profilePhoto || '',
+    biography: user.biography || '',
     birthDate: user.birthDate || null,
-    country: user.country || "",
+    country: user.country || '',
     gender: user.gender || 'prefer_not_say',
     preferences: user.preferences,
     createdAt: user.createdAt,
@@ -41,15 +42,15 @@ function createAccessToken(userId) {
 }
 
 function createRefreshTokenValue() {
-  return crypto.randomBytes(64).toString("hex");
+  return crypto.randomBytes(64).toString('hex');
 }
 
 function hashToken(token) {
-  return crypto.createHash("sha256").update(token).digest("hex");
+  return crypto.createHash('sha256').update(token).digest('hex');
 }
 
 function getClientIp(req) {
-  return req.ip || req.headers["x-forwarded-for"] || "";
+  return req.ip || req.headers['x-forwarded-for'] || '';
 }
 
 function sessionResponse(session) {
@@ -75,69 +76,69 @@ async function issueRefreshToken(userId, req) {
     user: userId,
     tokenHash,
     expiresAt: new Date(Date.now() + REFRESH_TOKEN_TTL_DAYS * 24 * 60 * 60 * 1000),
-    createdByIp: String(getClientIp(req) || ""),
-    userAgent: String(req.headers["user-agent"] || ""),
+    createdByIp: String(getClientIp(req) || ''),
+    userAgent: String(req.headers['user-agent'] || ''),
   });
 
   return refreshToken;
 }
 
 // Get all users
-router.get("/", async (req, res) => {
+router.get('/', async (req, res) => {
   if (!isDbConnected()) {
-    return res.status(503).json({ message: "Database unavailable" });
+    return res.status(503).json({ message: 'Database unavailable' });
   }
 
   try {
-    const users = await User.find({}, "-password");
+    const users = await User.find({}, '-password');
     res.json(users);
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
 // Search users for friend picker
-router.get("/search", auth, async (req, res) => {
+router.get('/search', auth, async (req, res) => {
   if (!isDbConnected()) {
-    return res.status(503).json({ message: "Database unavailable" });
+    return res.status(503).json({ message: 'Database unavailable' });
   }
 
-  const query = String(req.query.q || "").trim();
+  const query = String(req.query.q || '').trim();
   if (query.length < 2) {
-    return res.status(400).json({ message: "Query must have at least 2 characters" });
+    return res.status(400).json({ message: 'Query must have at least 2 characters' });
   }
 
   try {
-    const safe = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const regex = new RegExp(safe, "i");
+    const safe = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(safe, 'i');
 
     const users = await User.find(
       {
         _id: { $ne: req.user.id },
         $or: [{ name: regex }, { email: regex }],
       },
-      "name email avatar"
+      'name email avatar',
     )
       .sort({ name: 1 })
       .limit(15);
 
     res.json(users);
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
 // Available preferences catalog for settings screens
-router.get("/preferences/options", auth, (req, res) => {
+router.get('/preferences/options', auth, (req, res) => {
   res.json({
-    theme: ["light", "dark", "system"],
-    language: ["es", "en"],
-    textSize: ["small", "normal", "large"],
-    toggles: ["reduceAnimations", "emphasizeFocus", "easyReadMode"],
+    theme: ['light', 'dark', 'system'],
+    language: ['es', 'en'],
+    textSize: ['small', 'normal', 'large'],
+    toggles: ['reduceAnimations', 'emphasizeFocus', 'easyReadMode'],
     defaults: {
-      theme: "light",
-      language: "es",
-      textSize: "normal",
+      theme: 'light',
+      language: 'es',
+      textSize: 'normal',
       reduceAnimations: false,
       emphasizeFocus: false,
       easyReadMode: false,
@@ -146,33 +147,35 @@ router.get("/preferences/options", auth, (req, res) => {
 });
 
 // Current authenticated user profile
-router.get("/me", auth, async (req, res) => {
+router.get('/me', auth, async (req, res) => {
   if (!isDbConnected()) {
-    return res.status(503).json({ message: "Database unavailable" });
+    return res.status(503).json({ message: 'Database unavailable' });
   }
 
   try {
     const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user) return res.status(404).json({ message: 'User not found' });
     res.json(userResponse(user));
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
 // Update basic profile data
 router.patch(
-  "/me",
+  '/me',
   auth,
   [
-    body("name").optional().trim().notEmpty().withMessage("Name cannot be empty"),
-    body("email").optional().isEmail().withMessage("Valid email is required").normalizeEmail(),
-    body("profilePhoto").optional().isString().withMessage("profilePhoto must be a string"),
-    body("avatar").optional().isString().withMessage("avatar must be a string"),
-    body("biography").optional().isString().withMessage("biography must be a string"),
-    body("birthDate").optional({ nullable: true }).isISO8601().withMessage("Invalid birthDate"),
-    body("country").optional().isString().withMessage("country must be a string"),
-    body("gender").optional().isIn(["male", "female", "other", "prefer_not_say"]).withMessage("Invalid gender"),
+    body('name').optional().trim().notEmpty()
+      .withMessage('Name cannot be empty'),
+    body('email').optional().isEmail().withMessage('Valid email is required')
+      .normalizeEmail(),
+    body('profilePhoto').optional().isString().withMessage('profilePhoto must be a string'),
+    body('avatar').optional().isString().withMessage('avatar must be a string'),
+    body('biography').optional().isString().withMessage('biography must be a string'),
+    body('birthDate').optional({ nullable: true }).isISO8601().withMessage('Invalid birthDate'),
+    body('country').optional().isString().withMessage('country must be a string'),
+    body('gender').optional().isIn(['male', 'female', 'other', 'prefer_not_say']).withMessage('Invalid gender'),
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -181,16 +184,16 @@ router.patch(
     }
 
     if (!isDbConnected()) {
-      return res.status(503).json({ message: "Database unavailable" });
+      return res.status(503).json({ message: 'Database unavailable' });
     }
 
     try {
       const user = await User.findById(req.user.id);
-      if (!user) return res.status(404).json({ message: "User not found" });
+      if (!user) return res.status(404).json({ message: 'User not found' });
 
       if (req.body.email && req.body.email !== user.email) {
         const exists = await User.findOne({ email: req.body.email, _id: { $ne: req.user.id } });
-        if (exists) return res.status(400).json({ message: "Email exists" });
+        if (exists) return res.status(400).json({ message: 'Email exists' });
       }
 
       if (req.body.name !== undefined) user.name = req.body.name;
@@ -213,22 +216,22 @@ router.patch(
       await user.save();
       res.json(userResponse(user));
     } catch (error) {
-      res.status(500).json({ message: "Server error" });
+      res.status(500).json({ message: 'Server error' });
     }
-  }
+  },
 );
 
 // Update user preferences
 router.patch(
-  "/me/preferences",
+  '/me/preferences',
   auth,
   [
-    body("theme").optional().isIn(["light", "dark", "system"]).withMessage("Invalid theme"),
-    body("language").optional().isIn(["es", "en"]).withMessage("Invalid language"),
-    body("textSize").optional().isIn(["small", "normal", "large"]).withMessage("Invalid text size"),
-    body("reduceAnimations").optional().isBoolean().withMessage("reduceAnimations must be boolean"),
-    body("emphasizeFocus").optional().isBoolean().withMessage("emphasizeFocus must be boolean"),
-    body("easyReadMode").optional().isBoolean().withMessage("easyReadMode must be boolean"),
+    body('theme').optional().isIn(['light', 'dark', 'system']).withMessage('Invalid theme'),
+    body('language').optional().isIn(['es', 'en']).withMessage('Invalid language'),
+    body('textSize').optional().isIn(['small', 'normal', 'large']).withMessage('Invalid text size'),
+    body('reduceAnimations').optional().isBoolean().withMessage('reduceAnimations must be boolean'),
+    body('emphasizeFocus').optional().isBoolean().withMessage('emphasizeFocus must be boolean'),
+    body('easyReadMode').optional().isBoolean().withMessage('easyReadMode must be boolean'),
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -237,16 +240,16 @@ router.patch(
     }
 
     if (!isDbConnected()) {
-      return res.status(503).json({ message: "Database unavailable" });
+      return res.status(503).json({ message: 'Database unavailable' });
     }
 
     try {
       const user = await User.findById(req.user.id);
-      if (!user) return res.status(404).json({ message: "User not found" });
+      if (!user) return res.status(404).json({ message: 'User not found' });
 
       if (!user.preferences) user.preferences = {};
 
-      const keys = ["theme", "language", "textSize", "reduceAnimations", "emphasizeFocus", "easyReadMode"];
+      const keys = ['theme', 'language', 'textSize', 'reduceAnimations', 'emphasizeFocus', 'easyReadMode'];
       keys.forEach((key) => {
         if (req.body[key] !== undefined) user.preferences[key] = req.body[key];
       });
@@ -254,18 +257,18 @@ router.patch(
       await user.save();
       res.json(userResponse(user));
     } catch (error) {
-      res.status(500).json({ message: "Server error" });
+      res.status(500).json({ message: 'Server error' });
     }
-  }
+  },
 );
 
 // Change password
 router.patch(
-  "/me/password",
+  '/me/password',
   auth,
   [
-    body("currentPassword").notEmpty().withMessage("Current password is required"),
-    body("newPassword").isLength({ min: 8 }).withMessage("New password must be at least 8 characters"),
+    body('currentPassword').notEmpty().withMessage('Current password is required'),
+    body('newPassword').isLength({ min: 8 }).withMessage('New password must be at least 8 characters'),
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -274,37 +277,37 @@ router.patch(
     }
 
     if (!isDbConnected()) {
-      return res.status(503).json({ message: "Database unavailable" });
+      return res.status(503).json({ message: 'Database unavailable' });
     }
 
     const { currentPassword, newPassword } = req.body;
 
     try {
       const user = await User.findById(req.user.id);
-      if (!user) return res.status(404).json({ message: "User not found" });
+      if (!user) return res.status(404).json({ message: 'User not found' });
 
       const match = await bcrypt.compare(currentPassword, user.password);
-      if (!match) return res.status(400).json({ message: "Current password is invalid" });
+      if (!match) return res.status(400).json({ message: 'Current password is invalid' });
 
       user.password = await bcrypt.hash(newPassword, 10);
       await user.save();
 
       await RefreshToken.updateMany(
         { user: user._id, revokedAt: null },
-        { $set: { revokedAt: new Date() } }
+        { $set: { revokedAt: new Date() } },
       );
 
-      res.json({ message: "Password updated" });
+      res.json({ message: 'Password updated' });
     } catch (error) {
-      res.status(500).json({ message: "Server error" });
+      res.status(500).json({ message: 'Server error' });
     }
-  }
+  },
 );
 
 // Refresh access token with refresh token rotation
 router.post(
-  "/refresh",
-  [body("refreshToken").notEmpty().withMessage("refreshToken is required")],
+  '/refresh',
+  [body('refreshToken').notEmpty().withMessage('refreshToken is required')],
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -312,7 +315,7 @@ router.post(
     }
 
     if (!isDbConnected()) {
-      return res.status(503).json({ message: "Database unavailable" });
+      return res.status(503).json({ message: 'Database unavailable' });
     }
 
     try {
@@ -322,15 +325,15 @@ router.post(
       const incomingHash = hashToken(incomingToken);
 
       const tokenDoc = await RefreshToken.findOne({ tokenHash: incomingHash });
-      if (!tokenDoc) return res.status(401).json({ message: "Invalid refresh token" });
+      if (!tokenDoc) return res.status(401).json({ message: 'Invalid refresh token' });
 
       const now = new Date();
       if (tokenDoc.revokedAt || tokenDoc.expiresAt <= now) {
-        return res.status(401).json({ message: "Refresh token expired or revoked" });
+        return res.status(401).json({ message: 'Refresh token expired or revoked' });
       }
 
       const user = await User.findById(tokenDoc.user);
-      if (!user) return res.status(401).json({ message: "Invalid refresh token" });
+      if (!user) return res.status(401).json({ message: 'Invalid refresh token' });
 
       const newRefreshToken = createRefreshTokenValue();
       const newRefreshTokenHash = hashToken(newRefreshToken);
@@ -343,8 +346,8 @@ router.post(
         user: user._id,
         tokenHash: newRefreshTokenHash,
         expiresAt: new Date(Date.now() + REFRESH_TOKEN_TTL_DAYS * 24 * 60 * 60 * 1000),
-        createdByIp: String(getClientIp(req) || ""),
-        userAgent: String(req.headers["user-agent"] || ""),
+        createdByIp: String(getClientIp(req) || ''),
+        userAgent: String(req.headers['user-agent'] || ''),
       });
 
       const accessToken = createAccessToken(user._id);
@@ -356,15 +359,15 @@ router.post(
         user: userResponse(user),
       });
     } catch (error) {
-      res.status(500).json({ message: "Server error" });
+      res.status(500).json({ message: 'Server error' });
     }
-  }
+  },
 );
 
 // Logout and revoke current refresh token
-router.post("/logout", auth, async (req, res) => {
+router.post('/logout', auth, async (req, res) => {
   if (!isDbConnected()) {
-    return res.status(503).json({ message: "Database unavailable" });
+    return res.status(503).json({ message: 'Database unavailable' });
   }
 
   try {
@@ -376,19 +379,19 @@ router.post("/logout", auth, async (req, res) => {
       const tokenHash = hashToken(incomingToken);
       await RefreshToken.updateOne(
         { tokenHash, user: req.user.id, revokedAt: null },
-        { $set: { revokedAt: new Date() } }
+        { $set: { revokedAt: new Date() } },
       );
     } else {
       // If no refresh token is sent, revoke all active sessions for that user.
       await RefreshToken.updateMany(
         { user: req.user.id, revokedAt: null },
-        { $set: { revokedAt: new Date() } }
+        { $set: { revokedAt: new Date() } },
       );
     }
 
-    res.json({ message: "Logged out" });
+    res.json({ message: 'Logged out' });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
@@ -430,7 +433,7 @@ router.delete('/sessions/:sessionId', auth, async (req, res) => {
         user: req.user.id,
         revokedAt: null,
       },
-      { $set: { revokedAt: new Date() } }
+      { $set: { revokedAt: new Date() } },
     );
 
     if (!result.modifiedCount) {
@@ -444,9 +447,9 @@ router.delete('/sessions/:sessionId', auth, async (req, res) => {
 });
 
 // Logout from all sessions
-router.post("/logout-all", auth, async (req, res) => {
+router.post('/logout-all', auth, async (req, res) => {
   if (!isDbConnected()) {
-    return res.status(503).json({ message: "Database unavailable" });
+    return res.status(503).json({ message: 'Database unavailable' });
   }
 
   try {
@@ -454,20 +457,20 @@ router.post("/logout-all", auth, async (req, res) => {
 
     await RefreshToken.updateMany(
       { user: req.user.id, revokedAt: null },
-      { $set: { revokedAt: new Date() } }
+      { $set: { revokedAt: new Date() } },
     );
 
-    res.json({ message: "All sessions revoked" });
+    res.json({ message: 'All sessions revoked' });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
 // Delete account
 router.delete(
-  "/me",
+  '/me',
   auth,
-  [body("password").notEmpty().withMessage("Password is required")],
+  [body('password').notEmpty().withMessage('Password is required')],
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -475,32 +478,32 @@ router.delete(
     }
 
     if (!isDbConnected()) {
-      return res.status(503).json({ message: "Database unavailable" });
+      return res.status(503).json({ message: 'Database unavailable' });
     }
 
     try {
       const user = await User.findById(req.user.id);
-      if (!user) return res.status(404).json({ message: "User not found" });
+      if (!user) return res.status(404).json({ message: 'User not found' });
 
       const valid = await bcrypt.compare(req.body.password, user.password);
-      if (!valid) return res.status(400).json({ message: "Invalid password" });
+      if (!valid) return res.status(400).json({ message: 'Invalid password' });
 
       await RefreshToken.updateMany(
         { user: user._id, revokedAt: null },
-        { $set: { revokedAt: new Date() } }
+        { $set: { revokedAt: new Date() } },
       );
 
       await User.findByIdAndDelete(req.user.id);
-      res.json({ message: "Account deleted" });
+      res.json({ message: 'Account deleted' });
     } catch (error) {
-      res.status(500).json({ message: "Server error" });
+      res.status(500).json({ message: 'Server error' });
     }
-  }
+  },
 );
 
 // Registro
 router.post(
-  "/register",
+  '/register',
   [
     body('name').trim().notEmpty().withMessage('Name is required'),
     body('email').isEmail().withMessage('Valid email is required').normalizeEmail(),
@@ -508,7 +511,7 @@ router.post(
     body('biography').optional().isString().withMessage('biography must be a string'),
     body('birthDate').optional({ nullable: true }).isISO8601().withMessage('Invalid birthDate'),
     body('country').optional().isString().withMessage('country must be a string'),
-    body('gender').optional().isIn(['male','female','other','prefer_not_say']).withMessage('Invalid gender'),
+    body('gender').optional().isIn(['male', 'female', 'other', 'prefer_not_say']).withMessage('Invalid gender'),
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -519,12 +522,12 @@ router.post(
     const { name, email, password } = req.body;
 
     if (!isDbConnected()) {
-      return res.status(503).json({ message: "Database unavailable" });
+      return res.status(503).json({ message: 'Database unavailable' });
     }
 
     try {
       const userExists = await User.findOne({ email });
-      if (userExists) return res.status(400).json({ message: "Email exists" });
+      if (userExists) return res.status(400).json({ message: 'Email exists' });
 
       const hashed = await bcrypt.hash(password, 10);
 
@@ -532,22 +535,22 @@ router.post(
         name,
         email,
         password: hashed,
-        biography: req.body.biography ?? "",
+        biography: req.body.biography ?? '',
         birthDate: req.body.birthDate ? new Date(req.body.birthDate) : null,
-        country: req.body.country ?? "",
+        country: req.body.country ?? '',
         gender: req.body.gender ?? 'prefer_not_say',
       });
 
       res.status(201).json(userResponse(user));
     } catch (error) {
-      res.status(500).json({ message: "Server error" });
+      res.status(500).json({ message: 'Server error' });
     }
-  }
+  },
 );
 
 // Login
 router.post(
-  "/login",
+  '/login',
   [
     body('email').isEmail().withMessage('Valid email is required').normalizeEmail(),
     body('password').notEmpty().withMessage('Password is required'),
@@ -561,7 +564,7 @@ router.post(
     const { email, password } = req.body;
 
     if (!isDbConnected()) {
-      return res.status(503).json({ message: "Database unavailable" });
+      return res.status(503).json({ message: 'Database unavailable' });
     }
 
     try {
@@ -569,10 +572,10 @@ router.post(
 
       const user = await User.findOne({ email });
 
-      if (!user) return res.status(400).json({ message: "Invalid credentials" });
+      if (!user) return res.status(400).json({ message: 'Invalid credentials' });
 
       const match = await bcrypt.compare(password, user.password);
-      if (!match) return res.status(400).json({ message: "Invalid credentials" });
+      if (!match) return res.status(400).json({ message: 'Invalid credentials' });
 
       const accessToken = createAccessToken(user._id);
       const refreshToken = await issueRefreshToken(user._id, req);
@@ -584,9 +587,9 @@ router.post(
         user: userResponse(user),
       });
     } catch (error) {
-      res.status(500).json({ message: "Server error" });
+      res.status(500).json({ message: 'Server error' });
     }
-  }
+  },
 );
 
 module.exports = router;
