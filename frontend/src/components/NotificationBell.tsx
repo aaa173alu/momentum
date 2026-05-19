@@ -5,11 +5,10 @@ import {
   fetchUnreadNotificationCount,
   markAllNotificationsRead,
   markNotificationRead,
+  API_BASE_URL,
   type ApiNotification,
 } from '../services/api.ts'
 import { useTranslate } from '../services/useTranslate'
-
-const API_BASE = (import.meta.env.VITE_API_URL ?? 'http://localhost:5000').replace(/\/$/, '')
 
 type NotificationBellProps = {
   token: string | null
@@ -19,7 +18,7 @@ type NotificationBellProps = {
 function resolveUrl(url: string) {
   if (!url) return ''
   if (/^https?:\/\//i.test(url) || url.startsWith('//')) return url
-  return `${API_BASE}${url.startsWith('/') ? url : `/${url}`}`
+  return `${API_BASE_URL}${url.startsWith('/') ? url : `/${url}`}`
 }
 
 function resolveNotificationText(notification: ApiNotification, fallbackActor: string) {

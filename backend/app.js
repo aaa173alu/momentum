@@ -3,7 +3,24 @@ const cors = require('cors');
 const path = require('path');
 
 const app = express();
-app.use(cors());
+
+const frontendUrl = (process.env.PUBLIC_APP_URL || process.env.VITE_APP_URL || 'https://momentum-frontend-xjzj.onrender.com').replace(/\/$/, '');
+const allowedOrigins = new Set([
+  frontendUrl,
+  'http://localhost:5173',
+  'http://localhost:4173',
+  'http://localhost:3000',
+]);
+
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.has(origin) || /^http:\/\/localhost(?::\d+)?$/i.test(origin) || /^https?:\/\/127\.0\.0\.1(?::\d+)?$/i.test(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
+}));
 app.use(express.json({ limit: '10mb' }));
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

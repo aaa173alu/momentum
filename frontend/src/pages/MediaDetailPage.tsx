@@ -2,7 +2,7 @@ import { Fragment, useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useTema } from '../context/TemaContext'
 import { logoMAsset } from '../img'
-import { fetchCapsuleById, type ApiCapsule } from '../services/api'
+import { API_BASE_URL, fetchCapsuleById, type ApiCapsule } from '../services/api'
 import { useTranslate } from '../services/useTranslate'
 import '../styles/media-detail.css'
 
@@ -14,12 +14,10 @@ interface Comment {
   replyTo?: string | null
 }
 
-const API_BASE = (import.meta.env.VITE_API_URL ?? 'http://localhost:5000').replace(/\/$/, '')
-
 function resolveUrl(url: string) {
   if (!url) return ''
   if (/^https?:\/\//i.test(url) || url.startsWith('//')) return url
-  return `${API_BASE}${url.startsWith('/') ? url : `/${url}`}`
+  return `${API_BASE_URL}${url.startsWith('/') ? url : `/${url}`}`
 }
 
 function getMediaKind(media: any) {
@@ -189,7 +187,7 @@ export default function MediaDetailPage() {
     try {
       const token = sessionStorage.getItem('authToken')
       const res = await fetch(
-        `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/capsules/${capsuleId}/media/${mediaId}/comments`,
+        `${API_BASE_URL}/api/capsules/${capsuleId}/media/${mediaId}/comments`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
