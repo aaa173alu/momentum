@@ -43,39 +43,51 @@ function UploadCapsule() {
   }, [navigate, token])
 
   useEffect(() => {
-    // generate previews when files change
     if (!files) {
       setPreviews([])
       return
     }
 
-    const list = Array.from(files)
-    const items = list.map((file) => {
-      const ext = file.name.split('.').pop()?.toLowerCase() || ''
-      let kind = 'file'
+    let cancelled = false
+    const toRevoke: string[] = []
 
-      // prefer MIME type, fallback to extension checks
-      if (file.type && file.type.startsWith('image/')) kind = 'image'
-      else if (file.type && file.type.startsWith('video/')) kind = 'video'
-      else if (file.type && file.type.startsWith('audio/')) kind = 'audio'
-      else if (/^(glb|gltf|obj|fbx|stl)$/i.test(ext)) kind = '3d'
-      else if (/^(mp4|webm|mov|mkv|ogv|ogg)$/i.test(ext)) kind = 'video'
-      else if (/^(mp3|wav|m4a|aac|ogg)$/i.test(ext)) kind = 'audio'
-      else if (/^(png|jpg|jpeg|gif|webp)$/i.test(ext)) kind = 'image'
+    const buildPreviews = async () => {
+      const list = Array.from(files)
 
-      const url = URL.createObjectURL(file)
-      return { file, url, kind }
-    })
+      const items = list.map((file) => {
+        const ext = file.name.split('.').pop()?.toLowerCase() || ''
+        let kind = 'file'
+        if (file.type.startsWith('image/')) kind = 'image'
+        else if (file.type.startsWith('video/')) kind = 'video'
+        else if (file.type.startsWith('audio/')) kind = 'audio'
+        else if (/^(glb|gltf|obj|fbx|stl)$/i.test(ext)) kind = '3d-loading'
+        else if (/^(mp4|webm|mov|mkv|ogv|ogg)$/i.test(ext)) kind = 'video'
+        else if (/^(mp3|wav|m4a|aac|ogg)$/i.test(ext)) kind = 'audio'
+        else if (/^(png|jpg|jpeg|gif|webp)$/i.test(ext)) kind = 'image'
+        const url = URL.createObjectURL(file)
+        toRevoke.push(url)
+        return { file, url, kind }
+      })
 
-    // revoke previous previews
-    setPreviews((prev) => {
-      prev.forEach((p) => URL.revokeObjectURL(p.url))
-      return items
-    })
+      setPreviews((prev) => { prev.forEach((p) => URL.revokeObjectURL(p.url)); return items })
 
-    return () => {
-      items.forEach((i) => URL.revokeObjectURL(i.url))
+      // Generate rendered thumbnail for each 3D file
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].kind !== '3d-loading' || cancelled) continue
+        try {
+          const thumbBlob = await render3DThumbnailFromUrl(items[i].url)
+          if (cancelled) break
+          const thumbUrl = URL.createObjectURL(thumbBlob)
+          toRevoke.push(thumbUrl)
+          setPreviews((prev) => prev.map((p, idx) => idx === i ? { ...p, url: thumbUrl, kind: '3d' } : p))
+        } catch {
+          if (!cancelled) setPreviews((prev) => prev.map((p, idx) => idx === i ? { ...p, kind: '3d-error' } : p))
+        }
+      }
     }
+
+    buildPreviews()
+    return () => { cancelled = true; toRevoke.forEach((u) => URL.revokeObjectURL(u)) }
   }, [files])
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -263,6 +275,16 @@ function UploadCapsule() {
                 ) : p.kind === 'audio' ? (
                   <audio src={p.url} controls className="upload-preview-audio" />
                 ) : p.kind === '3d' ? (
+                  <div className="upload-preview-3d">
+                    <img src={p.url} alt={p.file.name} className="upload-preview-image" />
+                    <div className="upload-preview-3d__name">{p.file.name}</div>
+                  </div>
+                ) : p.kind === '3d-loading' ? (
+                  <div className="upload-preview-3d">
+                    <div className="upload-preview-3d__thumb"><span className="capsula-thumb-spinner" /></div>
+                    <div className="upload-preview-3d__name">{p.file.name}</div>
+                  </div>
+                ) : p.kind === '3d-error' ? (
                   <div className="upload-preview-3d">
                     <div className="upload-preview-3d__thumb">3D</div>
                     <div className="upload-preview-3d__name">{p.file.name}</div>

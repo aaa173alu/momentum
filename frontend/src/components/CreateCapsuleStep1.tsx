@@ -1,8 +1,8 @@
 import { Fragment, useState, useEffect, useRef } from 'react'
 import type { CreateCapsuleFormState } from '../pages/CreateCapsuleFlowPage'
-import { fetchCapsuleModels, uploadModel3DFile, type ApiCapsuleModel } from '../services/api'
+import { fetchCapsuleModels, uploadModel3DFile, uploadMediaFile, type ApiCapsuleModel } from '../services/api'
+import { render3DThumbnailFromUrl } from '../utils/render3DThumb'
 import { useTranslate } from '../services/useTranslate'
-import CapsulaThumb3D from './CapsulaThumb3D'
 
 interface CreateCapsuleStep1Props {
   form: CreateCapsuleFormState
@@ -84,11 +84,23 @@ function CreateCapsuleStep1({ form, updateForm, onContinue, isLoading }: CreateC
 
     try {
       const response = await uploadModel3DFile(file)
+
+      // Generar la miniatura renderizando el modelo subido y subirla a Cloudinary
+      let thumbnailUrl = response.thumbnailUrl || ''
+      try {
+        const thumbBlob = await render3DThumbnailFromUrl(response.fileUrl)
+        const thumbFile = new File([thumbBlob], 'model-thumb.png', { type: 'image/png' })
+        const thumbUpload = await uploadMediaFile(thumbFile)
+        thumbnailUrl = thumbUpload.fileUrl
+      } catch (thumbErr) {
+        console.error('No se pudo generar la miniatura del modelo 3D:', thumbErr)
+      }
+
       updateForm({
         modelId: null,
         modelFile: null,
         modelUrl: response.fileUrl,
-        thumbnailUrl: response.thumbnailUrl || '',
+        thumbnailUrl,
       })
     } catch (err) {
       console.error('Error uploading 3D model:', err)
@@ -268,6 +280,7 @@ function CreateCapsuleStep1({ form, updateForm, onContinue, isLoading }: CreateC
                         ? item.type === 'custom' ? 'pointer' : 'default'
                         : 'pointer',
                     }}
+                    onPointerDown={isCenter && item.type === 'custom' ? e => e.stopPropagation() : undefined}
                     onClick={() => {
                       if (i !== carouselIndex) {
                         setCarouselIndex(i)
@@ -281,9 +294,9 @@ function CreateCapsuleStep1({ form, updateForm, onContinue, isLoading }: CreateC
                         style={{
                           width: '100%',
                           height: '100%',
-                          borderRadius: '16px',
+                          borderRadius: '50%',
                           overflow: 'hidden',
-                          outline: isCenter ? '2.5px solid var(--color-texto-principal)' : 'none',
+                          outline: isCenter ? '2.5px solid #bbb' : 'none',
                           outlineOffset: '3px',
                         }}
                       >
@@ -299,12 +312,12 @@ function CreateCapsuleStep1({ form, updateForm, onContinue, isLoading }: CreateC
                         style={{
                           width: '100%',
                           height: '100%',
-                          borderRadius: '16px',
+                          borderRadius: '50%',
                           background: 'var(--color-fondo-secundario)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          outline: isCenter ? '2.5px solid var(--color-texto-principal)' : 'none',
+                          outline: isCenter ? '2.5px solid #bbb' : 'none',
                           outlineOffset: '3px',
                         }}
                       >
@@ -315,32 +328,37 @@ function CreateCapsuleStep1({ form, updateForm, onContinue, isLoading }: CreateC
                         style={{
                           width: '100%',
                           height: '100%',
-                          borderRadius: '16px',
+                          borderRadius: '50%',
                           overflow: 'hidden',
-                          outline: isCenter ? '2.5px solid var(--color-texto-principal)' : 'none',
+                          outline: isCenter ? '2.5px solid #bbb' : 'none',
                           outlineOffset: '3px',
                         }}
                       >
-                        <CapsulaThumb3D modelUrl={form.modelUrl} style={{ width: '160px', height: '160px', borderRadius: 0 }} />
+                        <img
+                          src={form.thumbnailUrl}
+                          alt="Modelo personalizado"
+                          draggable={false}
+                          style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block', pointerEvents: 'none' }}
+                        />
                       </div>
                     ) : (
                       <div
                         style={{
                           width: '100%',
                           height: '100%',
-                          borderRadius: '16px',
-                          background: 'var(--color-fondo-secundario)',
+                          borderRadius: '50%',
+                          background: 'transparent',
                           display: 'flex',
                           flexDirection: 'column',
                           alignItems: 'center',
                           justifyContent: 'center',
                           gap: '4px',
                           border: '1.5px dashed var(--color-borde)',
-                          outline: isCenter ? '2.5px solid var(--color-texto-principal)' : 'none',
+                          outline: isCenter ? '2.5px solid #bbb' : 'none',
                           outlineOffset: '3px',
                         }}
                       >
-                        <span style={{ fontSize: '2rem', lineHeight: 1 }}>+</span>
+                        <span style={{ fontSize: '3rem', lineHeight: 1 }}>+</span>
                         <span style={{ fontSize: '0.6875rem', textAlign: 'center', color: 'var(--color-texto-secundario)', padding: '0 8px' }}>
                           {txt('Cápsula personalizada', 'Custom capsule')}
                         </span>
@@ -418,7 +436,7 @@ function CreateCapsuleStep1({ form, updateForm, onContinue, isLoading }: CreateC
                 width: i === carouselIndex ? '16px' : '6px',
                 height: '6px',
                 borderRadius: '3px',
-                background: i === carouselIndex ? 'var(--color-texto-principal)' : 'var(--color-borde)',
+                background: i === carouselIndex ? '#bbb' : 'var(--color-borde)',
                 border: 'none',
                 cursor: 'pointer',
                 padding: 0,
