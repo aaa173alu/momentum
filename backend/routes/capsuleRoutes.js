@@ -255,10 +255,34 @@ router.get('/models', auth, async (req, res) => {
   try {
     const models = [
       {
+        id: 'model-globe with luggage 3d model',
+        nombre: 'Globe With Luggage 3d Model',
+        thumbnailUrl: 'https://pub-028631b9fcee42e0898f8bf691d9255f.r2.dev/defaults/thumbnails/globe with luggage 3d model.png',
+        modelUrl: 'https://pub-028631b9fcee42e0898f8bf691d9255f.r2.dev/defaults/models/globe with luggage 3d model.glb',
+      },
+      {
         id: 'model-infinity+clock+sculpture+3d+model',
         nombre: 'Infinity+Clock+Sculpture+3d+Model',
         thumbnailUrl: 'https://pub-028631b9fcee42e0898f8bf691d9255f.r2.dev/defaults/thumbnails/infinity+clock+sculpture+3d+model.png',
         modelUrl: 'https://pub-028631b9fcee42e0898f8bf691d9255f.r2.dev/defaults/models/infinity+clock+sculpture+3d+model.glb',
+      },
+      {
+        id: 'model-stack of books 3d model',
+        nombre: 'Stack Of Books 3d Model',
+        thumbnailUrl: 'https://pub-028631b9fcee42e0898f8bf691d9255f.r2.dev/defaults/thumbnails/stack of books 3d model.png',
+        modelUrl: 'https://pub-028631b9fcee42e0898f8bf691d9255f.r2.dev/defaults/models/stack of books 3d model.glb',
+      },
+      {
+        id: 'model-stylized house 3d model',
+        nombre: 'Stylized House 3d Model',
+        thumbnailUrl: 'https://pub-028631b9fcee42e0898f8bf691d9255f.r2.dev/defaults/thumbnails/stylized house 3d model.png',
+        modelUrl: 'https://pub-028631b9fcee42e0898f8bf691d9255f.r2.dev/defaults/models/stylized house 3d model.glb',
+      },
+      {
+        id: 'model-tiny_planet_friends_3d-packaging-2922',
+        nombre: 'Tiny Planet Friends 3d Packaging 2922',
+        thumbnailUrl: 'https://pub-028631b9fcee42e0898f8bf691d9255f.r2.dev/defaults/thumbnails/tiny_planet_friends_3d-packaging-2922.png',
+        modelUrl: 'https://pub-028631b9fcee42e0898f8bf691d9255f.r2.dev/defaults/models/tiny_planet_friends_3d-packaging-2922.glb',
       },
     ];
 
@@ -267,6 +291,7 @@ router.get('/models', auth, async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
+
 
 // Get capsules that the user owns or has shared access to
 router.get('/', auth, async (req, res) => {
