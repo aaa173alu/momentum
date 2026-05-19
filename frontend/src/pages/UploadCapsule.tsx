@@ -2,7 +2,7 @@ import { Fragment, type FormEvent, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTema } from '../context/TemaContext'
 import { logoMAsset } from '../img'
-import { createCapsule, uploadMediaFile } from '../services/api.ts'
+import { API_BASE_URL, createCapsule, uploadMediaFile } from '../services/api.ts'
 import { render3DThumbnailFromUrl } from '../utils/render3DThumb'
 
 function is3DMedia(type: string | undefined, fileName: string) {
@@ -12,7 +12,7 @@ function is3DMedia(type: string | undefined, fileName: string) {
 
 function resolveApiAssetUrl(url: string) {
   if (/^https?:\/\//i.test(url) || url.startsWith('//')) return url
-  const base = (import.meta.env.VITE_API_URL ?? 'http://localhost:5000').replace(/\/$/, '')
+  const base = API_BASE_URL
   if (!base) return url
   return `${base}${url.startsWith('/') ? url : `/${url}`}`
 }

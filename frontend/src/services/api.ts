@@ -1,4 +1,20 @@
-const API_BASE_URL = (import.meta.env.VITE_API_URL ?? 'http://localhost:5000').replace(/\/$/, '')
+const LOCAL_API_URL = 'http://localhost:5000'
+const PRODUCTION_API_URL = 'https://momentum-hc2x.onrender.com'
+
+function isLocalhostHost(hostname: string) {
+  return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]'
+}
+
+const configuredApiUrl = import.meta.env.VITE_API_URL?.trim()
+const runtimeDefaultApiUrl = typeof window !== 'undefined' && isLocalhostHost(window.location.hostname)
+  ? LOCAL_API_URL
+  : PRODUCTION_API_URL
+
+export const API_BASE_URL = (
+  configuredApiUrl && !(configuredApiUrl.includes('localhost') && runtimeDefaultApiUrl === PRODUCTION_API_URL)
+    ? configuredApiUrl
+    : runtimeDefaultApiUrl
+).replace(/\/$/, '')
 export const APP_PUBLIC_URL = (import.meta.env.VITE_APP_URL ?? 'https://momentum-frontend-xjzj.onrender.com').replace(/\/$/, '')
 
 export type ApiUser = {

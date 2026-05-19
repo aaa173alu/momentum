@@ -2,18 +2,16 @@ import { useEffect, useState, Fragment, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useTema } from '../context/TemaContext'
 import { logoMAsset } from '../img'
-import { fetchCapsuleById, getCapsuleThumb, type ApiCapsule } from '../services/api'
+import { API_BASE_URL, fetchCapsuleById, getCapsuleThumb, type ApiCapsule } from '../services/api'
 import { useTranslate } from '../services/useTranslate'
 import '../styles/shared-capsule-view.css'
-
-const API_BASE = (import.meta.env.VITE_API_URL ?? 'http://localhost:5000').replace(/\/$/, '')
 const SLIDE_REDUCTION = 92
 const SLIDE_GAP = 12
 
 function resolveUrl(url: string) {
   if (!url) return ''
   if (/^https?:\/\//i.test(url) || url.startsWith('//')) return url
-  return `${API_BASE}${url.startsWith('/') ? url : `/${url}`}`
+  return `${API_BASE_URL}${url.startsWith('/') ? url : `/${url}`}`
 }
 
 function SharedCapsuleView() {

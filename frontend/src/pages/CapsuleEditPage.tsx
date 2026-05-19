@@ -6,6 +6,7 @@ import iconDelete from '../img/icon_delete.svg'
 import iconCreate from '../img/icon_create.svg'
 import { Model3DViewer } from '../3d/Model3DViewer'
 import {
+  API_BASE_URL,
   fetchCapsuleById,
   fetchFriends,
   APP_PUBLIC_URL,
@@ -15,14 +16,12 @@ import {
 } from '../services/api'
 import { useTranslate } from '../services/useTranslate'
 import '../styles/capsule-edit.css'
-
-const API_BASE = (import.meta.env.VITE_API_URL ?? 'http://localhost:5000').replace(/\/$/, '')
 const SLIDE_GAP = 0
 
 function resolveUrl(url: string) {
   if (!url) return ''
   if (/^https?:\/\//i.test(url) || url.startsWith('//') || url.startsWith('data:') || url.startsWith('blob:')) return url
-  return `${API_BASE}${url.startsWith('/') ? url : `/${url}`}`
+  return `${API_BASE_URL}${url.startsWith('/') ? url : `/${url}`}`
 }
 
 // getFileName and getMediaKind are implemented inside the component to ensure

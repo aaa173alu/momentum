@@ -3,18 +3,16 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useTema } from '../context/TemaContext'
 import { logoMAsset } from '../img'
 import iconEdit from '../img/icon_edit.svg'
-import { fetchCapsuleById, getCapsuleThumb, type ApiCapsule } from '../services/api'
+import { API_BASE_URL, fetchCapsuleById, getCapsuleThumb, type ApiCapsule } from '../services/api'
 import { useTranslate } from '../services/useTranslate'
 import CapsulaThumb3D from '../components/CapsulaThumb3D'
 import '../styles/capsule-interior.css'
-
-const API_BASE = (import.meta.env.VITE_API_URL ?? 'http://localhost:5000').replace(/\/$/, '')
 
 function resolveUrl(url: string) {
   if (!url) return ''
   if (/^https?:\/\//i.test(url) || url.startsWith('//') || url.startsWith('data:') || url.startsWith('blob:')) return url
   if (url.startsWith('/3d/')) return url
-  return `${API_BASE}${url.startsWith('/') ? url : `/${url}`}`
+  return `${API_BASE_URL}${url.startsWith('/') ? url : `/${url}`}`
 }
 
 interface Comment {
@@ -312,7 +310,7 @@ function CapsuleInterior() {
     try {
       const token = sessionStorage.getItem('authToken')
       const res = await fetch(
-        `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/capsules/${id}/comments`,
+        `${API_BASE_URL}/api/capsules/${id}/comments`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -344,7 +342,7 @@ function CapsuleInterior() {
     try {
       const token = sessionStorage.getItem('authToken')
       const res = await fetch(
-        `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/capsules/${id}/media/${mediaId}/comments`,
+        `${API_BASE_URL}/api/capsules/${id}/media/${mediaId}/comments`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },

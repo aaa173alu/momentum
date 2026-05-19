@@ -2,19 +2,17 @@ import { useEffect, useState, Fragment } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useTema } from '../context/TemaContext'
 import { logoMAsset } from '../img'
-import { fetchCapsuleById, type ApiCapsule, type ApiMediaItem } from '../services/api'
+import { API_BASE_URL, fetchCapsuleById, type ApiCapsule, type ApiMediaItem } from '../services/api'
 import { useTranslate } from '../services/useTranslate'
 import { Model3DViewer } from '../3d/Model3DViewer'
 import '../styles/capsule-view.css'
-
-const API_BASE = (import.meta.env.VITE_API_URL ?? 'http://localhost:5000').replace(/\/$/, '')
 const FALLBACK_MODEL = '/3d/liberty.glb'
 
 function resolveUrl(url: string) {
   if (!url) return ''
   if (/^https?:\/\//i.test(url) || url.startsWith('//') || url.startsWith('data:') || url.startsWith('blob:')) return url
   if (url.startsWith('/3d/')) return url
-  return `${API_BASE}${url.startsWith('/') ? url : `/${url}`}`
+  return `${API_BASE_URL}${url.startsWith('/') ? url : `/${url}`}`
 }
 
 function find3DModel(items: ApiMediaItem[] | undefined) {
