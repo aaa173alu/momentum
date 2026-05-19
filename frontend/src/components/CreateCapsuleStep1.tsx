@@ -11,6 +11,14 @@ interface CreateCapsuleStep1Props {
   isLoading: boolean
 }
 
+const ITEM_WIDTH = 160
+const ITEM_GAP = 24
+const ITEM_SPAN = ITEM_WIDTH + ITEM_GAP
+
+type CarouselItem =
+  | { type: 'model'; data: ApiCapsuleModel }
+  | { type: 'custom'; data: null }
+
 function CreateCapsuleStep1({ form, updateForm, onContinue, isLoading }: CreateCapsuleStep1Props) {
   const { language } = useTranslate()
   const txt = (es: string, en: string) => (language === 'en' ? en : es)
@@ -20,6 +28,12 @@ function CreateCapsuleStep1({ form, updateForm, onContinue, isLoading }: CreateC
   const [error, setError] = useState('')
   const [loadingModels, setLoadingModels] = useState(true)
   const [uploadingFile, setUploadingFile] = useState(false)
+
+  // Drag state
+  const [dragOffset, setDragOffset] = useState(0)
+  const [isDragging, setIsDragging] = useState(false)
+  const dragStartX = useRef(0)
+  const hasDragged = useRef(false)
 
   useEffect(() => {
     const loadModels = async () => {
@@ -35,21 +49,18 @@ function CreateCapsuleStep1({ form, updateForm, onContinue, isLoading }: CreateC
     loadModels()
   }, [])
 
+  // Auto-select the centered predefined model whenever the carousel moves
+  useEffect(() => {
+    if (models.length === 0) return
+    if (carouselIndex < models.length) {
+      const m = models[carouselIndex]
+      updateForm({ modelId: m.id, modelFile: null, modelUrl: m.modelUrl, thumbnailUrl: m.thumbnailUrl })
+    }
+  }, [carouselIndex, models]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     updateForm({ title: e.target.value })
     setError('')
-  }
-
-  const handleModelSelect = (modelId: string) => {
-    const selected = models.find(m => m.id === modelId)
-    if (selected) {
-      updateForm({
-        modelId,
-        modelFile: null,
-        modelUrl: selected.modelUrl,
-        thumbnailUrl: selected.thumbnailUrl,
-      })
-    }
   }
 
   const handleCustomModelClick = () => {
@@ -72,9 +83,7 @@ function CreateCapsuleStep1({ form, updateForm, onContinue, isLoading }: CreateC
     setUploadingFile(true)
 
     try {
-      // Upload the 3D model file
       const response = await uploadModel3DFile(file)
-      
       updateForm({
         modelId: null,
         modelFile: null,
@@ -125,10 +134,51 @@ function CreateCapsuleStep1({ form, updateForm, onContinue, isLoading }: CreateC
     onContinue()
   }
 
-  const isModelSelected = form.modelId || form.modelUrl
-  const isCustomModelSelected = !form.modelId && Boolean(form.modelUrl) && carouselIndex === models.length
-  const nextIndex = (carouselIndex + 1) % (models.length + 1)
+  // Carousel drag handlers
+  const onCarouselPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    dragStartX.current = e.clientX
+    hasDragged.current = false
+    setIsDragging(true)
+    e.currentTarget.setPointerCapture(e.pointerId)
+  }
+
+  const onCarouselPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDragging) return
+    const delta = e.clientX - dragStartX.current
+    if (Math.abs(delta) > 8) hasDragged.current = true
+    setDragOffset(delta)
+  }
+
+  const onCarouselPointerUp = () => {
+    if (!isDragging) return
+    setIsDragging(false)
+    if (hasDragged.current) {
+      const total = models.length + 1
+      // Snap to whichever item is closest to center when released
+      const steps = -Math.round(dragOffset / ITEM_SPAN)
+      const newIndex = ((carouselIndex + steps) % total + total) % total
+      setCarouselIndex(newIndex)
+    }
+    setDragOffset(0)
+  }
+
+  // Block click events that follow a drag gesture
+  const onCarouselClickCapture = (e: React.MouseEvent) => {
+    if (hasDragged.current) {
+      e.stopPropagation()
+      hasDragged.current = false
+    }
+  }
+
+  const totalItems = models.length + 1
+  const nextIndex = (carouselIndex + 1) % totalItems
   const prevIndex = carouselIndex === 0 ? models.length : carouselIndex - 1
+  const isModelSelected = form.modelId || form.modelUrl
+
+  const carouselItems: CarouselItem[] = [
+    ...models.map(m => ({ type: 'model' as const, data: m })),
+    { type: 'custom' as const, data: null },
+  ]
 
   return (
     <Fragment>
@@ -162,174 +212,230 @@ function CreateCapsuleStep1({ form, updateForm, onContinue, isLoading }: CreateC
           {txt('Diseño de Cápsula', 'Capsule Design')}
         </label>
 
-        {/* Carrusel */}
-        <div style={{ position: 'relative', marginBottom: '16px' }}>
+        {/* Carousel outer wrapper */}
+        <div style={{ position: 'relative', height: '190px', marginBottom: '12px' }}>
+
+          {/* Drag + overflow-clip area */}
           <div
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '20px',
+              position: 'absolute',
+              inset: 0,
+              overflow: 'hidden',
+              cursor: isDragging ? 'grabbing' : 'grab',
+              touchAction: 'pan-y',
             }}
+            onPointerDown={onCarouselPointerDown}
+            onPointerMove={onCarouselPointerMove}
+            onPointerUp={onCarouselPointerUp}
+            onPointerLeave={onCarouselPointerUp}
+            onClickCapture={onCarouselClickCapture}
           >
-            {/* Flecha izquierda */}
-            <button
-              type="button"
-              onClick={() => setCarouselIndex(prevIndex)}
-              disabled={isLoading}
-              style={{
-                background: 'none',
-                border: 'none',
-                fontSize: '1.5000rem',
-                color: 'var(--color-texto-principal)',
-                cursor: 'pointer',
-                padding: '8px',
-              }}
-              aria-label={txt('Modelo anterior', 'Previous model')}
-            >
-              ‹
-            </button>
-
-            {/* Modelo central */}
+            {/* Sliding track: left edge starts at container center, then we translate left */}
             <div
               style={{
+                position: 'absolute',
+                left: '50%',
+                top: '50%',
                 display: 'flex',
-                flexDirection: 'column',
+                gap: `${ITEM_GAP}px`,
                 alignItems: 'center',
-                minWidth: '140px',
+                transform: `translateX(${-(carouselIndex * ITEM_SPAN + ITEM_WIDTH / 2) + dragOffset}px) translateY(-50%)`,
+                transition: isDragging ? 'none' : 'transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                userSelect: 'none',
+                willChange: 'transform',
               }}
             >
-              {carouselIndex < models.length ? (
-                <>
-                  <div
-                    style={{
-                      width: '160px',
-                      height: '160px',
-                      borderRadius: '16px',
-                      overflow: 'hidden',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      transform: isModelSelected && form.modelId === models[carouselIndex].id ? 'scale(1.08)' : 'scale(1)',
-                      transition: 'transform 0.2s ease',
-                      cursor: 'pointer',
-                      outline: isModelSelected && form.modelId === models[carouselIndex].id ? '2px solid var(--color-texto-principal)' : 'none',
-                    }}
-                    onClick={() => handleModelSelect(models[carouselIndex].id)}
-                  >
-                    <img
-                      src={models[carouselIndex].thumbnailUrl}
-                      alt={models[carouselIndex].nombre}
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'contain',
-                      }}
-                    />
-                  </div>
-                </>
-              ) : (
-                <>
-                  {uploadingFile ? (
-                    <div
-                      style={{
-                        width: '160px',
-                        height: '160px',
-                        borderRadius: '16px',
-                        background: 'var(--color-fondo-secundario)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <span className="capsula-thumb-spinner" />
-                    </div>
-                  ) : form.modelUrl && !form.modelId ? (
-                    <div
-                      style={{
-                        width: '160px',
-                        height: '160px',
-                        borderRadius: '16px',
-                        overflow: 'hidden',
-                        transform: isCustomModelSelected ? 'scale(1.08)' : 'scale(1)',
-                        transition: 'transform 0.2s ease',
-                        cursor: 'pointer',
-                        outline: isCustomModelSelected ? '2px solid var(--color-texto-principal)' : 'none',
-                      }}
-                      onClick={handleCustomModelClick}
-                      title={txt('Cambiar modelo', 'Change model')}
-                    >
-                      <CapsulaThumb3D
-                        modelUrl={form.modelUrl}
-                        style={{ width: '160px', height: '160px', borderRadius: 0 }}
-                      />
-                    </div>
-                  ) : (
-                    <div
-                      style={{
-                        width: '160px',
-                        height: '160px',
-                        borderRadius: '16px',
-                        background: 'var(--color-fondo-secundario)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer',
-                        gap: '4px',
-                        border: '1.5px dashed var(--color-borde)',
-                        transform: isCustomModelSelected ? 'scale(1.08)' : 'scale(1)',
-                        outline: isCustomModelSelected ? '2px solid var(--color-texto-principal)' : 'none',
-                      }}
-                      onClick={handleCustomModelClick}
-                    >
-                      <span style={{ fontSize: '2rem', lineHeight: 1 }}>+</span>
-                      <span style={{ fontSize: '0.6875rem', textAlign: 'center', color: 'var(--color-texto-secundario)' }}>
-                        {txt('Cápsula personalizada', 'Custom capsule')}
-                      </span>
-                    </div>
-                  )}
-                  {form.modelUrl && !form.modelId && (
-                    <p style={{ fontSize: '0.6875rem', marginTop: '8px', textAlign: 'center', color: 'var(--color-texto-secundario)' }}>
-                      {txt('Personalizada', 'Custom')}
-                    </p>
-                  )}
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".glb,.gltf"
-                    onChange={handleModelFileChange}
-                    style={{ display: 'none' }}
-                  />
-                </>
-              )}
-            </div>
+              {carouselItems.map((item, i) => {
+                const distPx = (i - carouselIndex) * ITEM_SPAN + dragOffset
+                const dist = Math.abs(distPx / ITEM_SPAN)
+                const opacity = Math.max(0, 1 - dist * 0.6)
+                const scale = Math.max(0.78, 1 - dist * 0.18)
+                const isCenter = i === carouselIndex
 
-            {/* Flecha derecha */}
-            <button
-              type="button"
-              onClick={() => setCarouselIndex(nextIndex)}
-              disabled={isLoading}
-              style={{
-                background: 'none',
-                border: 'none',
-                fontSize: '1.5000rem',
-                color: 'var(--color-texto-principal)',
-                cursor: 'pointer',
-                padding: '8px',
-              }}
-              aria-label={txt('Modelo siguiente', 'Next model')}
-            >
-              ›
-            </button>
+                return (
+                  <div
+                    key={item.type === 'model' ? item.data!.id : 'custom'}
+                    style={{
+                      width: `${ITEM_WIDTH}px`,
+                      height: `${ITEM_WIDTH}px`,
+                      flexShrink: 0,
+                      opacity,
+                      transform: `scale(${scale})`,
+                      transition: isDragging
+                        ? 'opacity 0.05s, transform 0.05s'
+                        : 'opacity 0.35s, transform 0.35s',
+                      cursor: isCenter
+                        ? item.type === 'custom' ? 'pointer' : 'default'
+                        : 'pointer',
+                    }}
+                    onClick={() => {
+                      if (i !== carouselIndex) {
+                        setCarouselIndex(i)
+                      } else if (item.type === 'custom') {
+                        handleCustomModelClick()
+                      }
+                    }}
+                  >
+                    {item.type === 'model' ? (
+                      <div
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          borderRadius: '16px',
+                          overflow: 'hidden',
+                          outline: isCenter ? '2.5px solid var(--color-texto-principal)' : 'none',
+                          outlineOffset: '3px',
+                        }}
+                      >
+                        <img
+                          src={item.data!.thumbnailUrl}
+                          alt={item.data!.nombre}
+                          draggable={false}
+                          style={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none', display: 'block' }}
+                        />
+                      </div>
+                    ) : uploadingFile ? (
+                      <div
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          borderRadius: '16px',
+                          background: 'var(--color-fondo-secundario)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          outline: isCenter ? '2.5px solid var(--color-texto-principal)' : 'none',
+                          outlineOffset: '3px',
+                        }}
+                      >
+                        <span className="capsula-thumb-spinner" />
+                      </div>
+                    ) : form.modelUrl && !form.modelId ? (
+                      <div
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          borderRadius: '16px',
+                          overflow: 'hidden',
+                          outline: isCenter ? '2.5px solid var(--color-texto-principal)' : 'none',
+                          outlineOffset: '3px',
+                        }}
+                      >
+                        <CapsulaThumb3D modelUrl={form.modelUrl} style={{ width: '160px', height: '160px', borderRadius: 0 }} />
+                      </div>
+                    ) : (
+                      <div
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          borderRadius: '16px',
+                          background: 'var(--color-fondo-secundario)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '4px',
+                          border: '1.5px dashed var(--color-borde)',
+                          outline: isCenter ? '2.5px solid var(--color-texto-principal)' : 'none',
+                          outlineOffset: '3px',
+                        }}
+                      >
+                        <span style={{ fontSize: '2rem', lineHeight: 1 }}>+</span>
+                        <span style={{ fontSize: '0.6875rem', textAlign: 'center', color: 'var(--color-texto-secundario)', padding: '0 8px' }}>
+                          {txt('Cápsula personalizada', 'Custom capsule')}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
           </div>
+
+          {/* Left arrow — stopPropagation on pointerDown so it doesn't start a drag */}
+          <button
+            type="button"
+            onPointerDown={e => e.stopPropagation()}
+            onClick={() => setCarouselIndex(prevIndex)}
+            disabled={isLoading}
+            aria-label={txt('Modelo anterior', 'Previous model')}
+            style={{
+              position: 'absolute',
+              left: '4px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              zIndex: 2,
+              background: 'none',
+              border: 'none',
+              fontSize: '1.75rem',
+              lineHeight: 1,
+              color: 'var(--color-texto-principal)',
+              opacity: 0.65,
+              cursor: 'pointer',
+              padding: '8px 6px',
+            }}
+          >
+            ‹
+          </button>
+
+          {/* Right arrow */}
+          <button
+            type="button"
+            onPointerDown={e => e.stopPropagation()}
+            onClick={() => setCarouselIndex(nextIndex)}
+            disabled={isLoading}
+            aria-label={txt('Modelo siguiente', 'Next model')}
+            style={{
+              position: 'absolute',
+              right: '4px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              zIndex: 2,
+              background: 'none',
+              border: 'none',
+              fontSize: '1.75rem',
+              lineHeight: 1,
+              color: 'var(--color-texto-principal)',
+              opacity: 0.65,
+              cursor: 'pointer',
+              padding: '8px 6px',
+            }}
+          >
+            ›
+          </button>
         </div>
 
-        {form.modelFile && (
-          <div style={{ padding: '8px 12px', backgroundColor: 'var(--color-fondo-secundario)', borderRadius: '6px', fontSize: '0.8125rem', color: 'var(--color-texto-principal)' }}>
-            {txt('Archivo', 'File')}: {form.modelFile.name}
-          </div>
-        )}
+        {/* Dot indicators */}
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '6px', marginBottom: '8px' }}>
+          {Array.from({ length: totalItems }).map((_, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => setCarouselIndex(i)}
+              disabled={isLoading}
+              aria-label={`${i + 1}`}
+              style={{
+                width: i === carouselIndex ? '16px' : '6px',
+                height: '6px',
+                borderRadius: '3px',
+                background: i === carouselIndex ? 'var(--color-texto-principal)' : 'var(--color-borde)',
+                border: 'none',
+                cursor: 'pointer',
+                padding: 0,
+                transition: 'width 0.3s ease, background 0.3s ease',
+              }}
+            />
+          ))}
+        </div>
+
+        {/* Hidden file input for custom 3D model */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".glb,.gltf"
+          onChange={handleModelFileChange}
+          style={{ display: 'none' }}
+        />
       </div>
 
       {/* SUBIR ARCHIVOS */}
@@ -346,29 +452,14 @@ function CreateCapsuleStep1({ form, updateForm, onContinue, isLoading }: CreateC
           {txt('Subir archivos', 'Upload files')}
         </label>
 
-        {/* Grilla de miniaturas */}
-        <div
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '10px',
-            marginBottom: '12px',
-          }}
-        >
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '12px' }}>
           {form.mediaFiles.map((file, index) => {
             const isVideo = file.type.startsWith('video')
             const isImage = file.type.startsWith('image')
             const preview = isImage || isVideo ? URL.createObjectURL(file) : null
 
             return (
-              <div
-                key={index}
-                style={{
-                  position: 'relative',
-                  width: '112px',
-                  height: '112px',
-                }}
-              >
+              <div key={index} style={{ position: 'relative', width: '112px', height: '112px' }}>
                 <div
                   style={{
                     width: '100%',
@@ -388,6 +479,7 @@ function CreateCapsuleStep1({ form, updateForm, onContinue, isLoading }: CreateC
                   <button
                     type="button"
                     onClick={() => handleRemoveMedia(index)}
+                    aria-label={txt('Eliminar archivo', 'Remove file')}
                     style={{
                       position: 'absolute',
                       top: '-8px',
@@ -404,7 +496,6 @@ function CreateCapsuleStep1({ form, updateForm, onContinue, isLoading }: CreateC
                       justifyContent: 'center',
                       fontSize: '1rem',
                     }}
-                    aria-label={txt('Eliminar archivo', 'Remove file')}
                   >
                     ×
                   </button>
@@ -413,7 +504,6 @@ function CreateCapsuleStep1({ form, updateForm, onContinue, isLoading }: CreateC
             )
           })}
 
-          {/* Botón + para añadir más */}
           <button
             type="button"
             onClick={handleAddMedia}
@@ -452,7 +542,9 @@ function CreateCapsuleStep1({ form, updateForm, onContinue, isLoading }: CreateC
           disabled={isLoading || loadingModels || uploadingFile || !form.title.trim() || !isModelSelected}
           style={{
             padding: '12px 32px',
-            backgroundColor: isLoading || loadingModels || uploadingFile || !form.title.trim() || !isModelSelected ? 'var(--color-borde)' : 'var(--color-boton-primario)',
+            backgroundColor: isLoading || loadingModels || uploadingFile || !form.title.trim() || !isModelSelected
+              ? 'var(--color-borde)'
+              : 'var(--color-boton-primario)',
             color: 'white',
             border: 'none',
             borderRadius: '8px',
