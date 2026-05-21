@@ -277,7 +277,7 @@ function CreateCapsuleStep2({
             style={{
               padding: '12px 32px',
               backgroundColor: isLoading || !form.title.trim() || !form.categoria.trim() ? 'var(--color-borde)' : 'var(--color-boton-primario)',
-              color: 'white',
+              color: 'var(--color-boton-texto)',
               border: 'none',
               borderRadius: '8px',
               cursor: isLoading || !form.title.trim() || !form.categoria.trim() ? 'not-allowed' : 'pointer',

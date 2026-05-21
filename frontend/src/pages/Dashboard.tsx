@@ -4,7 +4,7 @@ import { useTema } from '../context/TemaContext'
 import IconoTema from '../components/IconoTema'
 import CapsulaThumb from '../components/CapsulaThumb'
 import NotificationBell from '../components/NotificationBell'
-import { logoMAsset, settingsIconAsset, notificationIconAsset, notificationIconNAsset } from '../img'
+import { logoMAsset, settingsIconAsset, settingsIconWhiteAsset, notificationIconAsset, notificationIconWhiteAsset } from '../img'
 import { clearSession, getCapsuleThumb, type ApiCapsule } from '../services/api'
 import { useTranslate } from '../services/useTranslate'
 import '../styles/home.css'
@@ -32,7 +32,8 @@ function Dashboard() {
   const { t, language } = useTranslate()
   const txt = (es: string, en: string) => (language === 'en' ? en : es)
   const logo = tema === 'oscuro' ? '/img/logo_m_blanco.svg' : logoMAsset
-  const notificationIcon = tema === 'oscuro' ? notificationIconAsset : notificationIconNAsset
+  const settingsIcon = tema === 'oscuro' ? settingsIconWhiteAsset : settingsIconAsset
+  const notificationIcon = tema === 'oscuro' ? notificationIconWhiteAsset : notificationIconAsset
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState('')
   const [capsulasDesbloqueadas, setCapsulasDesbloqueadas] = useState<ApiCapsule[]>([])
   const [misCapsulas, setMisCapsulas] = useState<ApiCapsule[]>([])
@@ -161,7 +162,7 @@ function Dashboard() {
         <div className="home-header__right">
           <NotificationBell token={sessionStorage.getItem('authToken')} iconSrc={notificationIcon} />
           <button type="button" className="home-header__settings" aria-label={txt('Abrir ajustes', 'Open settings')} onClick={() => navigate('/ajustes')}>
-            <img src={settingsIconAsset} alt="" aria-hidden="true" />
+            <img src={settingsIcon} alt="" aria-hidden="true" />
           </button>
         </div>
       </header>

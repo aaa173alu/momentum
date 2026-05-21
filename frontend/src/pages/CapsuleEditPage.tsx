@@ -224,7 +224,7 @@ function CapsuleEditPage() {
   const patchCapsule = useCallback(async (body: Record<string, unknown>) => {
     if (!id) return
     const token = sessionStorage.getItem('authToken')
-    await fetch(`${API_BASE}/api/capsules/${id}`, {
+    await fetch(`${API_BASE_URL}/api/capsules/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
       body: JSON.stringify(body),
@@ -255,7 +255,7 @@ function CapsuleEditPage() {
     if (!id) return
     const token = sessionStorage.getItem('authToken')
     try {
-      const res = await fetch(`${API_BASE}/api/capsules/${id}/media/${mediaId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/capsules/${id}/media/${mediaId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` },
       })
@@ -276,7 +276,7 @@ function CapsuleEditPage() {
     if (!capsule || !id) return
     try {
       const token = sessionStorage.getItem('authToken')
-      const res = await fetch(`${API_BASE}/api/capsules/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/capsules/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` },
       })
@@ -319,7 +319,7 @@ function CapsuleEditPage() {
     if (!id) return
     try {
       const token = sessionStorage.getItem('authToken')
-      const res = await fetch(`${API_BASE}/api/capsules/${id}/share`, {
+      const res = await fetch(`${API_BASE_URL}/api/capsules/${id}/share`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ userIds: [friendId] }),
@@ -345,14 +345,14 @@ function CapsuleEditPage() {
           try {
             const formData = new FormData()
             formData.append('file', p.file)
-            const uploadRes = await fetch(`${API_BASE}/api/uploads/media`, {
+            const uploadRes = await fetch(`${API_BASE_URL}/api/uploads/media`, {
               method: 'POST',
               headers: { 'Authorization': `Bearer ${token}` },
               body: formData,
             })
             if (!uploadRes.ok) { console.error('Upload failed for', p.file.name); continue }
             const uploaded = await uploadRes.json()
-            await fetch(`${API_BASE}/api/capsules/${id}/media`, {
+            await fetch(`${API_BASE_URL}/api/capsules/${id}/media`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
               body: JSON.stringify({ url: uploaded.fileUrl || uploaded.file || uploaded.url, type: uploaded.type, modelFormat: uploaded.modelFormat, thumbnailUrl: uploaded.thumbnailUrl }),
@@ -489,7 +489,7 @@ function CapsuleEditPage() {
                 if (!id) return
                 try {
                   const token = sessionStorage.getItem('authToken')
-                  const res = await fetch(`${API_BASE}/api/capsules/${id}/invite`, {
+                  const res = await fetch(`${API_BASE_URL}/api/capsules/${id}/invite`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify({ role: 'view', expiresInDays: 14 }),

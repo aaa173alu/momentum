@@ -172,7 +172,7 @@ function NotificationBell({ token, iconSrc }: NotificationBellProps) {
     setRejectingId(notification._id)
     try {
       const token = sessionStorage.getItem('authToken')
-      await fetch(`${API_BASE}/api/capsules/${capsuleId}/collaborators/${currentUserId}`, {
+      await fetch(`${API_BASE_URL}/api/capsules/${capsuleId}/collaborators/${currentUserId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` },
       })

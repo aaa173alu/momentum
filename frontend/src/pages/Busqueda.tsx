@@ -10,6 +10,7 @@ import iconLove from '../img/icon_love.svg'
 import iconLoveN from '../img/icon_love_n.svg'
 import iconWork from '../img/icon_work.svg'
 import iconWorkN from '../img/icon_work_n.svg'
+import iconExpand from '../img/icon_expand_n.svg'
 import CapsulaThumb from '../components/CapsulaThumb'
 import { getCapsuleThumb, type ApiCapsule } from '../services/api'
 import { useTranslate } from '../services/useTranslate'
@@ -23,9 +24,10 @@ interface Categoria {
 
 const categorias: Categoria[] = [
   { label: 'VIAJES', valor: 'viajes', icono: iconTrip, iconoN: iconTripN },
+  { label: 'ESTUDIO', valor: 'estudio', icono: iconWork, iconoN: iconWorkN },
+  { label: 'AMIGOS', valor: 'amigos', icono: iconLove, iconoN: iconLoveN },
   { label: 'FAMILIA', valor: 'familia', icono: iconFamily, iconoN: iconFamilyN },
-  { label: 'AMISTAD', valor: 'amistad', icono: iconLove, iconoN: iconLoveN },
-  { label: 'TRABAJO', valor: 'trabajo', icono: iconWork, iconoN: iconWorkN },
+  { label: 'OTROS', valor: 'otros', icono: iconExpand, iconoN: iconExpand },
 ]
 
 export default function Busqueda() {
@@ -53,14 +55,11 @@ export default function Busqueda() {
 
   const categoriasUi: Categoria[] = [
     { label: txt('VIAJES', 'TRAVEL'), valor: 'viajes', icono: iconTrip, iconoN: iconTripN },
+    { label: txt('ESTUDIO', 'STUDY'), valor: 'estudio', icono: iconTrip, iconoN: iconTripN },
+    { label: txt('AMIGOS', 'FRIENDS'), valor: 'amigos', icono: iconLove, iconoN: iconLoveN },
     { label: txt('FAMILIA', 'FAMILY'), valor: 'familia', icono: iconFamily, iconoN: iconFamilyN },
-    { label: txt('AMISTAD', 'FRIENDSHIP'), valor: 'amistad', icono: iconLove, iconoN: iconLoveN },
-    { label: txt('TRABAJO', 'WORK'), valor: 'trabajo', icono: iconWork, iconoN: iconWorkN },
+    { label: txt('OTROS', 'OTHER'), valor: 'otros', icono: iconWork, iconoN: iconWorkN },
   ]
-
-  useEffect(() => {
-    setToken(sessionStorage.getItem('authToken') || '')
-  }, [])
 
   // Sincronizar el input con el param q de la URL (al navegar de vuelta etc.)
   useEffect(() => {

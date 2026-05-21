@@ -17,7 +17,7 @@ function HeaderConTitulo({ titulo, iconoDerecha, onIconoDerecha }: HeaderConTitu
     <header className="header-con-titulo" aria-label={titulo}>
       <h1 className="header-con-titulo__title">{titulo.toUpperCase()}</h1>
 
-      <Link to="/" className="header-con-titulo__logo-button" aria-label="Ir a Home">
+      <Link to="/inicio" className="header-con-titulo__logo-button" aria-label="Ir a Home">
         <img className="header-con-titulo__logo" src={logo} alt="Momentum" />
       </Link>
 

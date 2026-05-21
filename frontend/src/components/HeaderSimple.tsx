@@ -8,7 +8,7 @@ function HeaderSimple() {
 
   return (
     <header className="header-simple" aria-label="Encabezado simple">
-      <Link to="/" className="header-simple__logo-button" aria-label="Ir a Home">
+      <Link to="/inicio" className="header-simple__logo-button" aria-label="Ir a Home">
         <img className="header-simple__logo" src={logo} alt="Momentum" />
       </Link>
     </header>
