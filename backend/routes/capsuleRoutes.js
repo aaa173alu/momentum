@@ -331,7 +331,7 @@ router.get('/', auth, async (req, res) => {
       mongoQuery.$and.push({ $or: [{ title: regex }, { description: regex }, { category: regex }] });
     }
 
-    if (category) mongoQuery.category = String(category);
+    if (category) mongoQuery.category = new RegExp(`^${String(category)}$`, 'i');
 
     if (dateFrom || dateTo) {
       mongoQuery.date = mongoQuery.date || {};
@@ -735,46 +735,46 @@ router.post('/:id/share', auth, async (req, res) => {
   }
 });
 
-  // Generate an invite token for a capsule (owner/admin)
-  router.post('/:id/invite', auth, async (req, res) => {
-    if (!isDbConnected()) {
-      return res.status(503).json({ message: 'Database unavailable' });
+// Generate an invite token for a capsule (owner/admin)
+router.post('/:id/invite', auth, async (req, res) => {
+  if (!isDbConnected()) {
+    return res.status(503).json({ message: 'Database unavailable' });
+  }
+
+  if (!isValidObjectId(req.params.id)) {
+    return res.status(400).json({ message: 'Invalid capsule id' });
+  }
+
+  try {
+    const capsule = await Capsule.findById(req.params.id);
+    if (!capsule) return res.status(404).json({ message: 'Capsule not found' });
+
+    if (!canManage(capsule, req.user.id)) {
+      return res.status(403).json({ message: 'Not authorized' });
     }
 
-    if (!isValidObjectId(req.params.id)) {
-      return res.status(400).json({ message: 'Invalid capsule id' });
-    }
+    const role = normalizeRole(req.body.role);
+    const expiresInDays = Number(req.body.expiresInDays) || 7;
+    const tokenValue = crypto.randomBytes(20).toString('hex');
 
-    try {
-      const capsule = await Capsule.findById(req.params.id);
-      if (!capsule) return res.status(404).json({ message: 'Capsule not found' });
+    const invite = await InviteToken.create({
+      token: tokenValue,
+      capsule: capsule._id,
+      role,
+      createdBy: req.user.id,
+      expiresAt: new Date(Date.now() + Math.max(0, expiresInDays) * 24 * 60 * 60 * 1000),
+      used: false,
+    });
 
-      if (!canManage(capsule, req.user.id)) {
-        return res.status(403).json({ message: 'Not authorized' });
-      }
+    const publicUrlBase = (process.env.PUBLIC_APP_URL || process.env.VITE_APP_URL || 'https://momentum-frontend-xjzj.onrender.com').replace(/\/$/, '');
+    const inviteUrl = publicUrlBase ? `${publicUrlBase}/invite/${invite.token}` : `/invite/${invite.token}`;
 
-      const role = normalizeRole(req.body.role);
-      const expiresInDays = Number(req.body.expiresInDays) || 7;
-      const tokenValue = crypto.randomBytes(20).toString('hex');
-
-      const invite = await InviteToken.create({
-        token: tokenValue,
-        capsule: capsule._id,
-        role,
-        createdBy: req.user.id,
-        expiresAt: new Date(Date.now() + Math.max(0, expiresInDays) * 24 * 60 * 60 * 1000),
-        used: false,
-      });
-
-      const publicUrlBase = (process.env.PUBLIC_APP_URL || process.env.VITE_APP_URL || 'https://momentum-frontend-xjzj.onrender.com').replace(/\/$/, '');
-      const inviteUrl = publicUrlBase ? `${publicUrlBase}/invite/${invite.token}` : `/invite/${invite.token}`;
-
-      res.json({ token: invite.token, url: inviteUrl, expiresAt: invite.expiresAt });
-    } catch (error) {
-      console.error('Error generating invite token:', error);
-      res.status(500).json({ message: 'Server error' });
-    }
-  });
+    res.json({ token: invite.token, url: inviteUrl, expiresAt: invite.expiresAt });
+  } catch (error) {
+    console.error('Error generating invite token:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 // Replace collaborators (owner/admin)
 router.patch(
@@ -1066,7 +1066,7 @@ router.delete('/:id/media/:mediaId', auth, async (req, res) => {
     await capsule.save();
 
     // Clean up R2 after DB save
-    Promise.allSettled([deleteFromR2(urlToDelete), deleteFromR2(thumbToDelete)]).catch(() => {});
+    Promise.allSettled([deleteFromR2(urlToDelete), deleteFromR2(thumbToDelete)]).catch(() => { });
 
     res.json({ message: 'Media deleted' });
   } catch (error) {
@@ -1140,7 +1140,7 @@ router.delete('/:id', auth, async (req, res) => {
         if (item.url) urls.push(item.url);
         if (item.thumbnailUrl) urls.push(item.thumbnailUrl);
       }
-      Promise.allSettled(urls.map(deleteFromR2)).catch(() => {});
+      Promise.allSettled(urls.map(deleteFromR2)).catch(() => { });
     }
 
     await Capsule.findByIdAndDelete(req.params.id);
