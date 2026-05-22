@@ -11,41 +11,8 @@ if (!fs.existsSync(uploadsDir)) {
 const useR2 = Boolean(process.env.S3_3D_BUCKET);
 
 function fileFilter(_req, file, cb) {
-  const allowedMimeTypes = new Set([
-    'image/jpeg',
-    'image/png',
-    'image/gif',
-    'image/webp',
-    'video/mp4',
-    'video/webm',
-    'video/quicktime',
-    'video/ogg',
-    'audio/mpeg',
-    'audio/mp3',
-    'audio/wav',
-    'audio/ogg',
-    'application/pdf',
-    'text/plain',
-    'application/zip',
-    'application/octet-stream',
-    'model/gltf-binary',
-    'application/gltf+json',
-    'model/obj',
-    'model/fbx',
-    'model/stl',
-    'model/vnd.usdz+zip',
-  ]);
-
-  if (allowedMimeTypes.has(file.mimetype)) {
-    return cb(null, true);
-  }
-
-  const ext = String(file.originalname || '').split('.').pop()?.toLowerCase() || '';
-  if (['glb', 'gltf', 'obj', 'fbx', 'stl'].includes(ext)) {
-    return cb(null, true);
-  }
-
-  return cb(new Error('Unsupported file type'));
+  // Accept any file type; classification happens later in the upload handler
+  return cb(null, true);
 }
 
 let upload;
