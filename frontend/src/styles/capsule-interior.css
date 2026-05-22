@@ -9,6 +9,69 @@
   padding: 80px 0 calc(env(safe-area-inset-bottom, 16px) + 80px);
 }
 
+.ci-page--locked {
+  min-height: calc(100vh - 160px);
+  justify-content: center;
+  padding-inline: 20px;
+}
+
+.ci-locked-card {
+  width: min(100%, 380px);
+  margin: 0 auto;
+  padding: 28px 22px;
+  border-radius: 26px;
+  background: rgba(255, 252, 245, 0.82);
+  border: 1px solid rgba(33, 41, 61, 0.08);
+  box-shadow: 0 18px 45px rgba(25, 29, 42, 0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 14px;
+}
+
+.ci-locked-card__icon {
+  width: 66px;
+  height: 66px;
+  border-radius: 50%;
+  border: 1px solid rgba(33, 41, 61, 0.16);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  background: rgba(255, 255, 255, 0.75);
+}
+
+.ci-locked-card__title {
+  margin: 0;
+  font-family: var(--title-font, 'Playfair Display', serif);
+  font-size: 1.4rem;
+  color: var(--color-texto-principal);
+}
+
+.ci-locked-card__text,
+.ci-locked-card__date {
+  margin: 0;
+  color: var(--color-texto-principal);
+}
+
+.ci-locked-card__date {
+  font-weight: 600;
+}
+
+.ci-locked-card__button {
+  margin-top: 4px;
+  border: none;
+  border-radius: 999px;
+  padding: 12px 22px;
+  min-width: 120px;
+  font: inherit;
+  font-weight: 600;
+  color: var(--color-boton-texto);
+  background: var(--color-boton-primario);
+  cursor: pointer;
+}
+
 /* ── Header ── */
 .ci-header {
   display: flex;

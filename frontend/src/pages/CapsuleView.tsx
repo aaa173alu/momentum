@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useTema } from '../context/TemaContext'
 import { logoMAsset } from '../img'
 import { API_BASE_URL, fetchCapsuleById, type ApiCapsule, type ApiMediaItem } from '../services/api'
+import { formatUnlockDate, isTimeCapsuleLocked } from '../utils/timeCapsule'
 import { useTranslate } from '../services/useTranslate'
 import { Model3DViewer } from '../3d/Model3DViewer'
 import '../styles/capsule-view.css'
@@ -149,6 +150,8 @@ function CapsuleView() {
   const modelPath = model3D ? resolveUrl(model3D.url) : FALLBACK_MODEL
   const sharedUsers = getDisplaySharedUsers(capsule)
   const primaryUser = getPrimaryDisplayUser(sharedUsers)
+  const locked = isTimeCapsuleLocked(capsule)
+  const unlockDateLabel = formatUnlockDate(capsule.timeCapsule?.unlockAt)
 
   return (
     <Fragment>
@@ -168,13 +171,25 @@ function CapsuleView() {
         </div>
 
         {/* Botón Ver Cápsula */}
-        <button
-          type="button"
-          className="capsule-view__button"
-          onClick={() => navigate(`/capsulas/${id}/interior`)}
-        >
-          {txt('Ver Capsula', 'View Capsule')}
-        </button>
+        <div className="capsule-view__action-block">
+          <button
+            type="button"
+            className={`capsule-view__button${locked ? ' capsule-view__button--locked' : ''}`}
+            onClick={() => {
+              if (!locked) navigate(`/capsulas/${id}/interior`)
+            }}
+            disabled={locked}
+            aria-disabled={locked}
+          >
+            <span>{txt('Ver Capsula', 'View Capsule')}</span>
+            {locked && <span className="capsule-view__button-lock" aria-hidden="true">🔒</span>}
+          </button>
+          {locked && unlockDateLabel && (
+            <p className="capsule-view__unlock-text">
+              {txt('Espera hasta', 'Wait until')} {unlockDateLabel}
+            </p>
+          )}
+        </div>
 
         {/* Sección compartida */}
         {sharedUsers.length > 0 && (

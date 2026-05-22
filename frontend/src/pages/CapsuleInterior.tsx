@@ -4,6 +4,7 @@ import { useTema } from '../context/TemaContext'
 import { logoMAsset } from '../img'
 import iconEdit from '../img/icon_edit.svg'
 import { API_BASE_URL, fetchCapsuleById, getCapsuleThumb, type ApiCapsule } from '../services/api'
+import { formatUnlockDate, isTimeCapsuleLocked } from '../utils/timeCapsule'
 import { useTranslate } from '../services/useTranslate'
 import CapsulaThumb3D from '../components/CapsulaThumb3D'
 import '../styles/capsule-interior.css'
@@ -396,6 +397,34 @@ function CapsuleInterior() {
   if (error || !capsule) return (
     <Fragment>{header}<section className="page-layout"><p>{error}</p></section></Fragment>
   )
+
+  const locked = isTimeCapsuleLocked(capsule)
+  const unlockDateLabel = formatUnlockDate(capsule.timeCapsule?.unlockAt)
+
+  if (locked) {
+    return (
+      <Fragment>
+        {header}
+        <section className="ci-page ci-page--locked">
+          <div className="ci-locked-card" aria-live="polite">
+            <div className="ci-locked-card__icon" aria-hidden="true">🔒</div>
+            <h1 className="ci-locked-card__title">{capsule.title}</h1>
+            <p className="ci-locked-card__text">
+              {txt('Esta cápsula del tiempo todavía está bloqueada.', 'This time capsule is still locked.')}
+            </p>
+            {unlockDateLabel && (
+              <p className="ci-locked-card__date">
+                {txt('Espera hasta', 'Wait until')} {unlockDateLabel}
+              </p>
+            )}
+            <button type="button" className="ci-locked-card__button" onClick={() => navigate(-1)}>
+              {txt('Volver', 'Back')}
+            </button>
+          </div>
+        </section>
+      </Fragment>
+    )
+  }
 
   const generalComments: Comment[] = (capsule as any)?.comments || []
   const generalCommentTree = buildCommentTree(generalComments)
