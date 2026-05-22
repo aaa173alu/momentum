@@ -5,7 +5,7 @@ import IconoTema from '../components/IconoTema'
 import CapsulaThumb from '../components/CapsulaThumb'
 import NotificationBell from '../components/NotificationBell'
 import { logoMAsset, settingsIconAsset, settingsIconWhiteAsset, notificationIconAsset, notificationIconWhiteAsset } from '../img'
-import { clearSession, getCapsuleThumb, type ApiCapsule } from '../services/api'
+import { API_BASE_URL, clearSession, getCapsuleThumb, type ApiCapsule } from '../services/api'
 import { useTranslate } from '../services/useTranslate'
 import '../styles/home.css'
 
@@ -72,7 +72,7 @@ function Dashboard() {
     }
 
     const requestJson = async (path: string) => {
-      const response = await fetch(path, {
+      const response = await fetch(`${API_BASE_URL}${path}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
 

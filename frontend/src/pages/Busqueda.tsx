@@ -12,7 +12,7 @@ import iconWork from '../img/icon_work.svg'
 import iconWorkN from '../img/icon_work_n.svg'
 import iconExpand from '../img/icon_expand_n.svg'
 import CapsulaThumb from '../components/CapsulaThumb'
-import { getCapsuleThumb, type ApiCapsule } from '../services/api'
+import { API_BASE_URL, getCapsuleThumb, type ApiCapsule } from '../services/api'
 import { useTranslate } from '../services/useTranslate'
 
 interface Categoria {
@@ -78,7 +78,7 @@ export default function Busqueda() {
     const params = new URLSearchParams()
     if (activeQ) params.set('q', activeQ)
     if (activeCategory) params.set('category', activeCategory)
-    fetch(`/api/capsules?${params}`, {
+    fetch(`${API_BASE_URL}/api/capsules?${params}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => (res.ok ? res.json() : []))
