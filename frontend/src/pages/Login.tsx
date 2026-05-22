@@ -1,59 +1,71 @@
-import { type FormEvent, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { loginUser } from '../services/api.ts'
+import { useState } from 'react'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { loginUser } from '../services/api'
+import { logoMAsset } from '../img'
 
 function Login() {
   const navigate = useNavigate()
-  const [email, setEmail] = useState('')
+  const location = useLocation()
+  const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
-  const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-
-    if (!email.trim() || !password.trim()) {
-      setError('Completa correo y contrasena')
-      return
-    }
-
-    setIsSubmitting(true)
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault()
     setError('')
+    setLoading(true)
 
     try {
-      const result = await loginUser(email.trim(), password)
-      localStorage.setItem('authToken', result.token)
-      localStorage.setItem('authUser', JSON.stringify(result.user))
-      navigate('/dashboard')
-    } catch (submitError) {
-      const message = submitError instanceof Error ? submitError.message : 'Error de autenticacion'
-      setError(message)
+      const response = await loginUser(identifier, password)
+      sessionStorage.setItem('authToken', response.token)
+      if (response.refreshToken) {
+        sessionStorage.setItem('refreshToken', response.refreshToken)
+      }
+      sessionStorage.setItem('authUser', JSON.stringify(response.user))
+      window.dispatchEvent(new Event('authUserChanged'))
+      // respect redirectTo from location.state if present
+      const state = (location as any).state as { redirectTo?: string } | null
+      const redirectTo = state?.redirectTo
+      navigate(redirectTo || '/inicio')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al iniciar sesión')
     } finally {
-      setIsSubmitting(false)
+      setLoading(false)
     }
   }
 
   return (
-    <section className="auth-screen" aria-label="Pantalla de inicio de sesion">
-      <div className="auth-screen__brand" aria-hidden="true">M</div>
-      <article className="auth-screen__card">
+    <>
+      <header className="mobile-header" aria-label="Encabezado">
+        <Link to="/inicio-registro" className="mobile-header__back" aria-label="Volver a inicio">
+          ←
+        </Link>
+        <button type="button" className="mobile-header__logo-button" aria-label="Ir a inicio">
+          <img className="mobile-header__logo" src={logoMAsset} alt="Momentum" />
+        </button>
+        <span className="mobile-header__side" aria-hidden="true" />
+      </header>
 
-        <form className="auth-screen__form" onSubmit={handleSubmit}>
-          <label className="field auth-field" htmlFor="login-email">
-            <span>Correo electronico</span>
+      <section className="auth-screen" aria-label="Pantalla de inicio de sesión">
+        <article className="auth-screen__card">
+        <form className="auth-screen__form" onSubmit={handleLogin}>
+          <label className="field auth-field" htmlFor="login-identifier">
+            <span>Correo o nombre de usuario</span>
             <input
-              id="login-email"
-              name="email"
-              type="email"
-              placeholder="ejemplo@gmail.com"
-              autoComplete="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              id="login-identifier"
+              name="identifier"
+              type="text"
+              placeholder="ejemplo@gmail.com o usuario"
+              autoComplete="username"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
+              required
             />
           </label>
 
           <label className="field auth-field" htmlFor="login-password">
-            <span>Contrasena</span>
+            <span>Contraseña</span>
             <input
               id="login-password"
               name="password"
@@ -61,23 +73,33 @@ function Login() {
               placeholder="**********"
               autoComplete="current-password"
               value={password}
-              onChange={(event) => setPassword(event.target.value)}
+              onChange={(e) => setPassword(e.target.value)}
+              required
             />
           </label>
 
+          <button type="button" className="auth-screen__forgot">
+            He olvidado mi contraseña
+          </button>
+
           {error ? <p className="auth-screen__error">{error}</p> : null}
 
-          <button type="button" className="auth-screen__forgot">He olvidado mi contrasena</button>
-
           <div className="auth-screen__actions">
-            <Link to="/" className="auth-screen__back" aria-label="Volver a inicio">←</Link>
-            <button type="submit" className="auth-screen__submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Accediendo...' : 'Acceder'}
+            <span className="mobile-header__side" aria-hidden="true" />
+
+            <button type="submit" className="auth-screen__submit" disabled={loading}>
+              {loading ? 'Accediendo...' : 'Acceder'}
             </button>
           </div>
         </form>
+
+        <div className="auth-screen__footer">
+          <p>Captura tus recuerdos</p>
+          <img className="auth-screen__looma-logo" src="/img/logo_looma.svg" alt="looma" />
+        </div>
       </article>
     </section>
+    </>
   )
 }
 

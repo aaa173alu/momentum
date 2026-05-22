@@ -8,8 +8,8 @@ function InitialLoading() {
   const [exiting, setExiting] = useState(false)
 
   useEffect(() => {
-    // auto-advance after 6 seconds
-    timeoutRef.current = window.setTimeout(() => handleAdvance(), 6000)
+    // auto-advance after 5 seconds
+    timeoutRef.current = window.setTimeout(() => handleAdvance(), 5000)
 
     return () => {
       if (timeoutRef.current) window.clearTimeout(timeoutRef.current)
@@ -24,12 +24,12 @@ function InitialLoading() {
     // add a small exit animation before navigating
     setExiting(true)
     // wait for animation (300ms) then navigate
-    setTimeout(() => navigate('/inicio-publico'), 300)
+    window.setTimeout(() => navigate('/inicio-publico'), 300)
   }
 
   return (
     <section
-      className={`initial-loading ${exiting ? 'fade-out' : ''}`}
+      className={`onboarding-screen onboarding-screen--splash ${exiting ? 'fade-out' : ''}`}
       aria-label="Pantalla de carga inicial"
       onClick={() => {
         if (timeoutRef.current) window.clearTimeout(timeoutRef.current)
@@ -44,14 +44,7 @@ function InitialLoading() {
         }
       }}
     >
-      <div className="initial-loading__card">
-        <span className="initial-loading__badge">Momentum</span>
-        <h1>Preparando tu espacio</h1>
-        <p>Estamos cargando tu experiencia para que puedas entrar a tus capsulas.</p>
-        <div className="initial-loading__progress" aria-hidden="true">
-          <span />
-        </div>
-      </div>
+      <img src="/img/logo_momentum.svg" alt="Momentum" className="onboarding-screen__splash-logo" />
     </section>
   )
 }

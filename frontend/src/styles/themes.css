@@ -1,0 +1,60 @@
+:root {
+  --bg-global: var(--color-fondo);
+  --bg-secondary: var(--color-fondo-secundario);
+  --text-main: var(--color-texto-principal);
+  --text-muted: var(--color-texto-secundario);
+  --input-bg: var(--color-fondo-secundario);
+  --input-border: var(--color-borde);
+  --primary: var(--color-boton-primario);
+  --primary-text: var(--color-boton-texto);
+  --danger: var(--color-boton-destructivo);
+  --placeholder-color: var(--color-placeholder);
+  --navbar-color: var(--color-navbar);
+  --modal-color: var(--color-modal-fondo);
+  --separator-color: var(--color-separador);
+}
+
+[data-theme="claro"] {
+  --color-fondo: #E5DDD0;
+  --color-fondo-secundario: #F5F0E8;
+  --color-texto-principal: #1A1A1A;
+  --color-texto-secundario: #555555;
+  --color-borde: #CCCCCC;
+  --color-boton-primario: #1A1A1A;
+  --color-boton-texto: #FFFFFF;
+  --color-boton-destructivo: #8B2020;
+  --color-placeholder: #999999;
+  --color-navbar: #1A1A1A;
+  --color-modal-fondo: #0F1B2D;
+  --color-separador: #D5CCC0;
+}
+
+[data-theme="oscuro"] {
+  --color-fondo: #1A1A1A;
+  --color-fondo-secundario: #2A2A2A;
+  --color-texto-principal: #F0EDE8;
+  --color-texto-secundario: #AAAAAA;
+  --color-borde: #444444;
+  --color-boton-primario: #F0EDE8;
+  --color-boton-texto: #1A1A1A;
+  --color-boton-destructivo: #C0392B;
+  --color-placeholder: #777777;
+  --color-navbar: #0A0A0A;
+  --color-modal-fondo: #0F1B2D;
+  --color-separador: #333333;
+}
+
+[data-theme="altoContraste"] {
+  --color-fondo: #FFFFFF;
+  --color-fondo-secundario: #F0F0F0;
+  --color-texto-principal: #000000;
+  --color-texto-secundario: #000000;
+  --color-borde: #000000;
+  --color-boton-primario: #000000;
+  --color-boton-texto: #FFFFFF;
+  --color-boton-destructivo: #CC0000;
+  --color-placeholder: #444444;
+  --color-navbar: #000000;
+  --color-modal-fondo: #000000;
+  --color-separador: #000000;
+}

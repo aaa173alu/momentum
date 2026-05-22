@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Generador de miniaturas 3D</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 700px; margin: 40px auto; padding: 0 20px; background: #f5f5f5; }
+    h1 { font-size: 1.4rem; }
+    .card { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    canvas { display: block; border-radius: 8px; border: 1px solid #ddd; background-image: linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%); background-size: 20px 20px; background-position: 0 0, 0 10px, 10px -10px, -10px 0px; }
+    input[type=file] { margin: 12px 0; }
+    button { padding: 10px 24px; background: #2d4a8a; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-size: 0.95rem; }
+    button:disabled { background: #aaa; cursor: not-allowed; }
+    .hint { font-size: 0.8rem; color: #666; margin-top: 6px; }
+    #status { color: #444; font-size: 0.9rem; margin-top: 10px; min-height: 1.2em; }
+  </style>
+</head>
+<body>
+  <h1>Generador de miniaturas 3D</h1>
+  <p>Carga un archivo <strong>.glb</strong> y descarga su miniatura PNG (640×640) lista para subir a R2.</p>
+
+  <div class="card">
+    <label><strong>Archivo GLB</strong></label><br>
+    <input type="file" id="fileInput" accept=".glb,.gltf" />
+    <div>
+      <canvas id="canvas" width="640" height="640"></canvas>
+    </div>
+    <p id="status">Esperando archivo…</p>
+    <button id="downloadBtn" disabled>Descargar PNG</button>
+    <p class="hint">Repite el proceso para cada modelo. Guarda los PNG con el mismo nombre que el GLB (ej: <em>microphone.png</em>).</p>
+  </div>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+  <script type="module">
+    import * as THREE from 'three';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+    const fileInput = document.getElementById('fileInput');
+    const canvas = document.getElementById('canvas');
+    const status = document.getElementById('status');
+    const downloadBtn = document.getElementById('downloadBtn');
+
+    let currentFileName = 'thumbnail';
+
+    fileInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      currentFileName = file.name.replace(/\.[^.]+$/, '');
+      status.textContent = 'Cargando modelo…';
+      downloadBtn.disabled = true;
+
+      const url = URL.createObjectURL(file);
+
+      try {
+        await renderModel(url, file.name);
+        URL.revokeObjectURL(url);
+        status.textContent = '✓ Listo — pulsa "Descargar PNG"';
+        downloadBtn.disabled = false;
+      } catch (err) {
+        status.textContent = 'Error al cargar: ' + err.message;
+        URL.revokeObjectURL(url);
+      }
+    });
+
+    downloadBtn.addEventListener('click', () => {
+      canvas.toBlob((blob) => {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `${currentFileName}.png`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+      }, 'image/png');
+    });
+
+    async function renderModel(url) {
+      const scene = new THREE.Scene();
+      scene.background = null;
+
+      const ambient = new THREE.AmbientLight(0xffffff, 1.0);
+      scene.add(ambient);
+      const key = new THREE.DirectionalLight(0xffffff, 1.2);
+      key.position.set(3, 5, 4);
+      scene.add(key);
+      const fill = new THREE.DirectionalLight(0xffffff, 0.4);
+      fill.position.set(-3, 2, -2);
+      scene.add(fill);
+
+      const loader = new GLTFLoader();
+      const gltf = await loader.loadAsync(url);
+      const model = gltf.scene;
+      scene.add(model);
+
+      const box = new THREE.Box3().setFromObject(model);
+      const center = box.getCenter(new THREE.Vector3());
+      const size = box.getSize(new THREE.Vector3());
+      const maxDim = Math.max(size.x, size.y, size.z, 0.0001);
+      model.position.sub(center);
+      model.scale.setScalar(2 / maxDim);
+
+      const camera = new THREE.PerspectiveCamera(45, 1, 0.01, 2000);
+      const dist = 3.2;
+      camera.position.set(dist, dist * 0.45, dist);
+      camera.lookAt(0, 0, 0);
+
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
+      renderer.setSize(640, 640, false);
+      renderer.setPixelRatio(1);
+      renderer.setClearColor(0x000000, 0);
+      renderer.render(scene, camera);
+      renderer.dispose();
+    }
+  </script>
+</body>
+</html>

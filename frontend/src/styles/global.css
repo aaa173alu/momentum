@@ -1,9 +1,54 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap');
+
+@font-face {
+  font-family: 'Jomolhari';
+  src: url('/font/Jomolhari-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
-  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  --ui-font: Inter, system-ui, sans-serif;
+  --title-font: 'Playfair Display', serif;
+  font-family: var(--ui-font);
   line-height: 1.5;
   font-weight: 400;
-  color: #111827;
-  background-color: #ccc8bb;
+  color: var(--text-main);
+  background: var(--bg-global);
+  font-size: 1rem;
+}
+
+/* Stronger text-size variations so changes are very noticeable */
+html[data-text-size='small'] {
+  /* ~12px */
+  font-size: 0.75rem;
+}
+
+html[data-text-size='normal'] {
+  /* base 16px */
+  font-size: 1rem;
+}
+
+html[data-text-size='large'] {
+  /* pronounced large: ~24px */
+  font-size: 1.5rem;
+}
+
+html[data-theme='dark'] {
+  --bg-global: #1B1C1F;
+  --text-main: #F2F2F2;
+  --text-muted: #C4C4C4;
+  --input-bg: #2A2C31;
+  --input-border: #51545C;
+}
+
+html[data-theme='light'] {
+  --bg-global: #E5DDD0;
+  --text-main: #1a1a1a;
+  --text-muted: #666;
+  --input-bg: #F5F0E8;
+  --input-border: #CCCCCC;
 }
 
 * {
@@ -13,17 +58,131 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: linear-gradient(
-    180deg,
-    #ccc8bb 0%,
-    #e4e1d7 25%,
-    #f2f0eb 50%,
-    #e4e1d7 75%,
-    #ccc8bb 100%
-  );
-  background-attachment: fixed;
+  background: var(--bg-global);
+  font-family: var(--ui-font);
+  font-size: 1rem;
+  color: var(--text-main);
+  overflow-x: hidden;
+}
+
+body.pref-reduce-animations *,
+body.pref-reduce-animations *::before,
+body.pref-reduce-animations *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+body.pref-emphasize-focus :focus-visible {
+  outline: 3px solid var(--color-modal-fondo);
+  outline-offset: 2px;
+}
+
+body.pref-easy-read {
+  line-height: 1.72;
+  letter-spacing: 0.012em;
+  word-spacing: 0.05em;
 }
 
 #root {
   min-height: 100vh;
 }
+
+/* Upload previews */
+.upload-previews {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
+}
+.upload-preview-item {
+  width: 10rem;
+  max-width: 30vw;
+  border: 1px solid var(--input-border, #ddd);
+  padding: 0.5rem;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.02);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.upload-preview-image {
+  width: 100%;
+  height: 8rem;
+  object-fit: cover;
+  border-radius: 6px;
+}
+.upload-preview-video {
+  width: 100%;
+  height: 8rem;
+  background: #000;
+}
+.upload-preview-audio {
+  width: 100%;
+}
+.upload-preview-3d {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+.upload-preview-3d__thumb {
+  width: 72px;
+  height: 72px;
+  border-radius: 10px;
+  background: linear-gradient(180deg,#17324d,#0f1d2d);
+  color: #fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:700;
+}
+.upload-preview-file {
+  color: var(--text-main);
+  text-decoration: underline;
+}
+
+/* Registro: selector de archivo bonito */
+.auth-screen__file-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.6rem;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  color: var(--text-main);
+  cursor: pointer;
+  user-select: none;
+  font-weight: 600;
+}
+.auth-screen__file-picker:focus,
+.auth-screen__file-picker:focus-visible,
+.auth-screen__file-picker:hover {
+  outline: none;
+  box-shadow: 0 6px 18px rgba(16,32,54,0.08);
+  transform: translateY(-1px);
+}
+.auth-screen__file-picker span { display: inline-block }
+.auth-screen__file-picker-arrow { opacity: 0.7; font-weight: 700 }
+
+.auth-screen__file-hint { display: block; margin-top: 0.35rem; color: var(--text-muted); font-size: 0.95rem }
+
+.auth-screen__preview-wrap { margin-top: 0.6rem; display:flex; align-items:center; gap:0.6rem }
+.auth-screen__preview-image { width: 64px; height:64px; object-fit:cover; border-radius:8px; border:1px solid var(--input-border) }
+
+/* Make label accessible via keyboard */
+.auth-screen__file-picker[role="button"]:active { transform: translateY(0) }
+
+/* File row with avatar preview */
+.auth-screen__file-row { display:flex; align-items:center; gap:0.8rem }
+.auth-screen__avatar-preview { width:56px; height:56px; flex:0 0 56px; display:flex; align-items:center; justify-content:center }
+.auth-screen__avatar-image { width:56px; height:56px; border-radius:50%; object-fit:cover; border:2px solid rgba(0,0,0,0.08) }
+.auth-screen__avatar-fallback { width:56px; height:56px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:linear-gradient(180deg,#ece7df,#d9d4c8); color:#27323a; font-weight:700; font-size:1.1rem; border:2px solid var(--input-border) }
+
+/* Tweak file picker to match theme buttons */
+.auth-screen__file-picker { border-radius: 999px; padding: 0.45rem 0.9rem; font-size:0.95rem; background: var(--input-bg); color: var(--text-main); border:1px solid var(--input-border) }
+.auth-screen__file-picker img, .auth-screen__file-picker svg { height: 18px; display:block }
+.auth-screen__file-picker svg { filter: none }

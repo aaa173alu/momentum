@@ -2,9 +2,31 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>frontend</title>
+    <script>
+      (function () {
+        try {
+          var rawUser = localStorage.getItem('authUser');
+          var theme = 'claro';
+
+          if (rawUser) {
+            var parsed = JSON.parse(rawUser);
+            var storedTheme = parsed && parsed.preferences && (parsed.preferences.theme || parsed.preferences.tema);
+            if (storedTheme === 'oscuro' || storedTheme === 'altoContraste' || storedTheme === 'claro') {
+              theme = storedTheme;
+            } else if (storedTheme === 'dark') {
+              theme = 'oscuro';
+            }
+          }
+
+          document.documentElement.setAttribute('data-theme', theme);
+        } catch (error) {
+          document.documentElement.setAttribute('data-theme', 'claro');
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

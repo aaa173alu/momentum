@@ -1,0 +1,245 @@
+/* ═══════════════════════════════════════════════════════════════
+   SHARED CAPSULE VIEW  (/capsulas/:id/compartida)
+   ═══════════════════════════════════════════════════════════════ */
+
+.scv-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 80px 0 calc(env(safe-area-inset-bottom, 16px) + 80px);
+}
+
+/* ── Thumbnail ── */
+.scv-thumb-wrap {
+  width: 100%;
+  padding: 0 20px;
+}
+
+.scv-thumb {
+  width: 100%;
+  max-height: 260px;
+  border-radius: 20px;
+  object-fit: cover;
+  display: block;
+}
+
+.scv-thumb--placeholder {
+  width: 100%;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4rem;
+  background: var(--color-fondo-secundario);
+  border-radius: 20px;
+}
+
+/* ── Title ── */
+.scv-title {
+  font-family: var(--title-font, 'Playfair Display', serif);
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: var(--color-texto-principal);
+  margin: 0;
+  padding: 0 20px;
+  text-align: center;
+  line-height: 1.25;
+}
+
+/* ── Owner section ── */
+.scv-owner-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 0 20px;
+}
+
+.scv-owner-label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--color-texto-secundario);
+  text-transform: uppercase;
+}
+
+.scv-owner-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.scv-owner__avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: var(--color-fondo-secundario);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-texto-principal);
+}
+
+.scv-owner__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.scv-owner__name {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-texto-principal);
+}
+
+/* ── Carousel ── */
+.scv-carousel-wrap {
+  width: 100%;
+}
+
+.scv-carousel-outer {
+  overflow: hidden;
+  width: 100%;
+}
+
+.scv-carousel-track {
+  display: flex;
+  gap: 12px;
+  padding-left: 16px;
+  transition: transform 0.35s ease;
+  will-change: transform;
+}
+
+.scv-slide {
+  position: relative;
+  min-width: calc(min(100vw, 600px) - 92px);
+  flex-shrink: 0;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--color-fondo-secundario);
+  aspect-ratio: 4 / 3;
+}
+
+.scv-slide__media {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Controls row: [← dots →] below the slide */
+.scv-carousel-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px 0;
+}
+
+/* Arrows — static flex items in controls row */
+.scv-carousel__arrow {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--color-fondo-secundario);
+  border: 1px solid var(--color-borde);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.375rem;
+  line-height: 1;
+  color: var(--color-texto-principal);
+  transition: opacity 0.18s;
+  padding: 0;
+}
+
+.scv-carousel__arrow:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+.scv-carousel__arrow:active:not(:disabled) {
+  opacity: 0.7;
+}
+
+/* Dots */
+.scv-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  flex: 1;
+}
+
+.scv-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  border: none;
+  background: var(--color-borde);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.2s;
+}
+
+.scv-dot--active {
+  background: var(--color-texto-principal);
+}
+
+/* ── Description ── */
+.scv-description {
+  padding: 0 20px;
+  width: 100%;
+  border-top: 1px solid var(--color-separador);
+  padding-top: 16px;
+}
+
+.scv-description__text {
+  font-size: 0.875rem;
+  color: var(--color-texto-principal);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ── Accept button ── */
+.scv-accept-btn {
+  display: block;
+  width: calc(100% - 40px);
+  background: var(--color-boton-primario);
+  color: var(--color-boton-texto);
+  border: none;
+  border-radius: 999px;
+  padding: 14px 32px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: center;
+  transition: opacity 0.18s ease;
+}
+
+.scv-accept-btn:active {
+  opacity: 0.8;
+}
+
+@media (min-width: 768px) {
+  .scv-page {
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .scv-slide {
+    min-width: calc(600px - 108px);
+  }
+
+  .scv-accept-btn {
+    width: 100%;
+    max-width: 440px;
+  }
+}

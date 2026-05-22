@@ -1,0 +1,638 @@
+/* ═══════════════════════════════════════════════════════════════
+   CAPSULE EDIT  (/capsulas/:capsuleId/editar)
+   ═══════════════════════════════════════════════════════════════ */
+
+.ce-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 80px 0 calc(env(safe-area-inset-bottom, 16px) + 80px);
+}
+
+/* ── Header row ── */
+.ce-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 20px;
+}
+
+.ce-header__left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.ce-header__cancel {
+  background: none;
+  border: none;
+  color: var(--color-texto-secundario);
+  font-size: 0.875rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 4px 0;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: opacity 0.18s;
+}
+
+.ce-header__cancel:active {
+  opacity: 0.6;
+}
+
+/* ── Title ── */
+.ce-title__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--color-fondo-secundario);
+  border: 1px solid var(--color-borde);
+  border-radius: 99px;
+  padding: 7px 14px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-texto-principal);
+  cursor: pointer;
+  font-family: inherit;
+  max-width: 200px;
+  overflow: hidden;
+}
+
+.ce-title__text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ce-title__pencil {
+  font-size: 0.8125rem;
+  opacity: 0.6;
+  flex-shrink: 0;
+}
+
+/* Inline title edit */
+.ce-title-edit {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.ce-title-edit__input {
+  flex: 1;
+  min-width: 0;
+  background: var(--color-fondo-secundario);
+  border: 1px solid var(--color-boton-primario);
+  border-radius: 99px;
+  padding: 7px 14px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--color-texto-principal);
+  outline: none;
+}
+
+.ce-title-edit__cancel {
+  background: none;
+  border: none;
+  color: var(--color-texto-secundario);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px;
+  flex-shrink: 0;
+}
+
+/* ── Avatar stack ── */
+.ce-avatar-stack {
+  display: flex;
+  flex-direction: row-reverse;
+  width: fit-content;
+}
+
+.ce-avatar-stack__item {
+  border-radius: 50%;
+  border: 2px solid var(--color-fondo);
+  overflow: hidden;
+  margin-left: -8px;
+  background: var(--color-fondo-secundario);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: var(--color-texto-principal);
+  flex-shrink: 0;
+}
+
+.ce-avatar-stack__item:last-child {
+  margin-left: 0;
+}
+
+.ce-avatar-stack__item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ── Add friend button ── */
+.ce-add-friend-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--color-fondo-secundario);
+  border: 1px solid var(--color-borde);
+  border-radius: 99px;
+  padding: 8px 16px;
+  font-size: 0.875rem;
+  color: var(--color-texto-principal);
+  font-family: inherit;
+  cursor: pointer;
+  margin-left: 20px;
+  transition: opacity 0.18s;
+}
+
+.ce-add-friend-btn:active {
+  opacity: 0.7;
+}
+
+/* ── Carousel ── */
+.ce-carousel-wrap {
+  width: 100%;
+}
+
+.ce-carousel-outer {
+  overflow: hidden;
+  width: 100%;
+}
+
+.ce-carousel-track {
+  display: flex;
+  gap: 12px;
+  padding-left: 16px;
+  transition: transform 0.35s ease;
+  will-change: transform;
+}
+
+.ce-slide {
+  position: relative;
+  min-width: calc(min(100vw, 600px) - 92px);
+  flex-shrink: 0;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--color-fondo-secundario);
+  aspect-ratio: 4 / 3;
+}
+
+.ce-slide__media {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.ce-slide__delete {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  border: none;
+  color: #fff;
+  font-size: 1.125rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  padding: 0;
+  transition: opacity 0.18s;
+}
+
+.ce-slide__delete:active {
+  opacity: 0.7;
+}
+
+.ce-slide--add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed var(--color-borde);
+  background: var(--color-fondo-secundario);
+}
+
+.ci-slide--add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed var(--color-borde);
+  background: var(--color-fondo-secundario);
+}
+
+.ce-slide__add-btn {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--color-boton-primario);
+  color: var(--color-boton-texto);
+  border: none;
+  font-size: 1.75rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: opacity 0.18s;
+}
+
+.ce-slide__add-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Controls row: [← dots →] below the slide */
+.ce-carousel-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px 0;
+}
+
+/* Arrows — static flex items in controls row */
+.ce-carousel__arrow {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--color-fondo-secundario);
+  border: 1px solid var(--color-borde);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.375rem;
+  line-height: 1;
+  color: var(--color-texto-principal);
+  transition: opacity 0.18s;
+  padding: 0;
+}
+
+.ce-carousel__arrow:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+.ce-carousel__arrow:active:not(:disabled) {
+  opacity: 0.7;
+}
+
+/* Dots */
+.ce-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  flex: 1;
+}
+
+.ce-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  border: none;
+  background: var(--color-borde);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.2s;
+}
+
+.ce-dot--active {
+  background: var(--color-texto-principal);
+}
+
+/* No media */
+.ce-add-media-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-fondo-secundario);
+  border: 2px dashed var(--color-borde);
+  border-radius: 16px;
+  margin: 0 16px;
+  padding: 48px 32px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-texto-secundario);
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity 0.18s;
+}
+
+.ce-add-media-empty:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ce-add-media-btn {
+  display: block;
+  width: 100%;
+  background: var(--color-boton-primario);
+  color: var(--color-boton-texto);
+  border: none;
+  border-radius: 999px;
+  padding: 12px 16px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ce-add-media-btn:disabled { opacity: 0.6; cursor: not-allowed }
+
+/* ── Description ── */
+.ce-description {
+  padding: 0 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 1px solid var(--color-separador);
+  padding-top: 20px;
+}
+
+.ce-description__label {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--color-texto-principal);
+  margin: 0;
+}
+
+.ce-description__textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--color-borde);
+  border-radius: 12px;
+  background: var(--color-fondo-secundario);
+  color: var(--color-texto-principal);
+  font-size: 0.875rem;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 80px;
+  max-height: 200px;
+  outline: none;
+  line-height: 1.5;
+}
+
+.ce-description__textarea:focus {
+  border-color: var(--color-boton-primario);
+}
+
+.ce-description__textarea::placeholder {
+  color: var(--color-placeholder);
+}
+
+/* ── Save button ── */
+.ce-save-btn {
+  align-self: stretch;
+  margin: 0 20px;
+  background: var(--color-boton-primario);
+  color: var(--color-boton-texto);
+  border: none;
+  border-radius: 999px;
+  padding: 14px 32px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity 0.18s;
+}
+
+.ce-save-btn:active {
+  opacity: 0.8;
+}
+
+/* ── Delete capsule ── */
+.ce-delete-capsule-btn {
+  align-self: center;
+  background: none;
+  border: 1px solid #d32f2f;
+  border-radius: 99px;
+  color: #d32f2f;
+  font-size: 0.875rem;
+  font-weight: 500;
+  font-family: inherit;
+  padding: 10px 24px;
+  cursor: pointer;
+  margin: 0 20px;
+  transition: opacity 0.18s;
+}
+
+.ce-delete-capsule-btn:active {
+  opacity: 0.7;
+}
+
+/* ── Modals ── */
+.ce-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85); /* make overlay more opaque to avoid visual bleed-through */
+  display: flex;
+  align-items: flex-end;
+  z-index: 3000; /* ensure overlay sits above other popovers */
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+.ce-modal {
+  background: var(--color-fondo);
+  border-radius: 20px 20px 0 0;
+  padding: 24px 20px 32px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 3001; /* ensure modal content is above the overlay layer */
+}
+
+.ce-modal h2 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--color-texto-principal);
+  margin: 0;
+}
+
+.ce-modal p {
+  margin: 0;
+  color: var(--color-texto-principal);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.ce-modal__subtitle {
+  color: var(--color-texto-secundario) !important;
+}
+
+.ce-modal__buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.ce-modal__btn {
+  flex: 1;
+  padding: 13px;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity 0.18s;
+}
+
+.ce-modal__btn--cancel {
+  background: var(--color-fondo-secundario);
+  color: var(--color-texto-principal);
+  border: 1px solid var(--color-borde);
+}
+
+.ce-modal__btn--delete {
+  background: #d32f2f;
+  color: #fff;
+}
+
+.ce-modal__btn:active {
+  opacity: 0.8;
+}
+
+.ce-modal__close-btn {
+  background: var(--color-fondo-secundario);
+  color: var(--color-texto-principal);
+  border: 1px solid var(--color-borde);
+  border-radius: 12px;
+  padding: 13px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  margin-top: 4px;
+  transition: opacity 0.18s;
+}
+
+.ce-modal__close-btn:active {
+  opacity: 0.8;
+}
+
+/* ── Friends list ── */
+.ce-friends-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.ce-friend-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--color-fondo-secundario);
+  border-radius: 12px;
+}
+
+.ce-friend__info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.ce-friend__avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.ce-friend__avatar--fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-borde);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-texto-principal);
+}
+
+.ce-friend__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ce-friend__text strong {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-texto-principal);
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ce-friend__text small {
+  font-size: 0.75rem;
+  color: var(--color-texto-secundario);
+  display: block;
+}
+
+.ce-friend__add-btn {
+  background: var(--color-boton-primario);
+  color: var(--color-boton-texto);
+  border: none;
+  border-radius: 99px;
+  padding: 7px 14px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.18s;
+}
+
+.ce-friend__add-btn:active {
+  opacity: 0.8;
+}
+
+.ce-friends-empty {
+  text-align: center;
+  color: var(--color-texto-secundario);
+  padding: 24px 0;
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+/* ── Desktop ── */
+@media (min-width: 768px) {
+  .ce-page {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .ce-slide {
+    min-width: calc(600px - 108px);
+  }
+}

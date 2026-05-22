@@ -1,0 +1,2 @@
+Archivo de prueba para subir desde UI.
+Generado por el asistente para pruebas manuales.
