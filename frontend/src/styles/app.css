@@ -846,6 +846,12 @@
   max-width: 340px;
 }
 
+.settings-modal__card .settings-btn--ghost {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.04);
+}
+
 .settings-modal__text {
   margin: 0 0 24px;
   text-align: center;
