@@ -43,7 +43,7 @@ export default function Busqueda() {
   const [inputQuery, setInputQuery] = useState('')
   const [resultados, setResultados] = useState<ApiCapsule[]>([])
   const [buscando, setBuscando] = useState(false)
-  const [token, setToken] = useState('')
+  const token = sessionStorage.getItem('authToken')
 
   // Los filtros activos se derivan siempre de la URL, no del input
   const urlParams = new URLSearchParams(location.search)
