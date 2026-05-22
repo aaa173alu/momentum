@@ -114,7 +114,8 @@ function CreateCapsuleStep1({ form, updateForm, onContinue, isLoading }: CreateC
   const handleAddMedia = () => {
     const input = document.createElement('input')
     input.type = 'file'
-    input.accept = 'image/*,video/*'
+    // Allow any file type (images, videos, audio, pdfs, txt, archives, etc.)
+    // Backend will classify the file type and handle accordingly.
     input.multiple = true
     input.onchange = (e: any) => {
       const files = Array.from(e.target.files ?? []) as File[]
