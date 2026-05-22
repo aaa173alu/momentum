@@ -156,26 +156,32 @@
   align-items: center;
   justify-content: center;
   gap: 1.5rem;
-  color: #aaa;
+  color: var(--text-main);
   text-align: center;
   padding: 2rem;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  background: var(--input-bg);
 }
 
 .md-viewer__3d-label,
 .md-viewer__file-icon {
   font-size: 3rem;
-  opacity: 0.6;
+  opacity: 1;
+  color: var(--text-main);
 }
 
 .md-viewer__3d-label {
   width: 6rem;
   height: 6rem;
-  border: 2px solid #aaa;
+  border: 2px solid var(--input-border);
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: bold;
+  background: transparent;
 }
 
 .md-viewer__file-icon {

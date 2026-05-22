@@ -248,7 +248,20 @@ export default function MediaDetailPage() {
   return (
     <Fragment>
       <header className="md-header">
-        <button type="button" className="md-header__back" onClick={() => navigate(-1)} aria-label={t('back')}>←</button>
+        <button
+          type="button"
+          className="md-header__back"
+          onClick={() => {
+            if (capsuleId) {
+              navigate(`/capsulas/${capsuleId}/interior`)
+            } else {
+              navigate(-1)
+            }
+          }}
+          aria-label={t('back')}
+        >
+          ←
+        </button>
         <Link to="/inicio" className="md-header__logo" aria-label={t('homeTitle')}>
           <img src={logo} alt="Momentum" />
         </Link>
