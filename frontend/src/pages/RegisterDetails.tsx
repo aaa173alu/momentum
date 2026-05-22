@@ -1,6 +1,6 @@
 import { type FormEvent, useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { registerUser, loginUser, acceptInvite } from '../services/api.ts'
+import { acceptInvite, buildStoredAuthUser, loginUser, registerUser } from '../services/api.ts'
 import { logoMAsset } from '../img'
 
 type RegisterDraft = {
@@ -51,7 +51,8 @@ function RegisterDetails() {
         const resp = await loginUser(draft.email, draft.password)
         sessionStorage.setItem('authToken', resp.token)
         if (resp.refreshToken) sessionStorage.setItem('refreshToken', resp.refreshToken)
-        sessionStorage.setItem('authUser', JSON.stringify(resp.user))
+        sessionStorage.setItem('authUser', JSON.stringify(buildStoredAuthUser(resp.user)))
+        localStorage.removeItem('authUser')
         window.dispatchEvent(new Event('authUserChanged'))
 
         // If there is an inviteToken in the draft, accept it now

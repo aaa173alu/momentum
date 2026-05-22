@@ -8,7 +8,7 @@
     <script>
       (function () {
         try {
-          var rawUser = localStorage.getItem('authUser');
+          var rawUser = sessionStorage.getItem('authUser') || localStorage.getItem('authUser');
           var theme = 'claro';
 
           if (rawUser) {

@@ -6,6 +6,7 @@ import HeaderConAtras from '../components/HeaderConAtras'
 import ModalEliminarCuenta from '../components/ModalEliminarCuenta'
 import { defaultAvatarAsset } from '../img'
 import {
+  buildStoredAuthUser,
   changeCurrentUserPassword,
   clearSession,
   deleteCurrentUser,
@@ -175,7 +176,8 @@ function SettingsAccountPage() {
       if (Object.keys(payload).length > 0) {
         const updatedUser = await updateCurrentUser(payload)
         setOriginalUser(updatedUser)
-        localStorage.setItem('authUser', JSON.stringify(updatedUser))
+        sessionStorage.setItem('authUser', JSON.stringify(buildStoredAuthUser(updatedUser)))
+        localStorage.removeItem('authUser')
       }
 
       if (password.trim()) {

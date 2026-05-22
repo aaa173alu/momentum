@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { updateCurrentUserPreferences, type ApiUserPreferences } from '../services/api'
+import { buildStoredAuthUser, updateCurrentUserPreferences, type ApiUserPreferences } from '../services/api'
 
 export type TemaVisual = 'claro' | 'oscuro' | 'altoContraste'
 
@@ -31,29 +31,36 @@ function applyThemeToDocument(tema: TemaVisual) {
   document.documentElement.setAttribute('data-theme', tema)
 }
 
+function getStoredAuthUser() {
+  return sessionStorage.getItem('authUser') || localStorage.getItem('authUser')
+}
+
 function updateStoredUserTheme(tema: TemaVisual) {
-  const rawUser = sessionStorage.getItem('authUser')
+  const rawUser = getStoredAuthUser()
   if (!rawUser) return
 
   try {
-    const parsed = JSON.parse(rawUser) as { preferences?: ApiUserPreferences; [key: string]: unknown }
-    const updatedUser = {
-      ...parsed,
+    const parsed = JSON.parse(rawUser) as { _id?: string; preferences?: ApiUserPreferences }
+    if (!parsed._id) return
+
+    const updatedUser = buildStoredAuthUser({
+      _id: parsed._id,
       preferences: {
         ...(parsed.preferences || {}),
         theme: tema,
         tema,
       },
-    }
+    } as any)
 
     sessionStorage.setItem('authUser', JSON.stringify(updatedUser))
+    localStorage.removeItem('authUser')
   } catch {
-    sessionStorage.setItem('authUser', rawUser)
+    return
   }
 }
 
 export function TemaProvider({ children }: { children: ReactNode }) {
-  const [tema, setTema] = useState<TemaVisual>(() => resolveStoredTheme(sessionStorage.getItem('authUser')))
+  const [tema, setTema] = useState<TemaVisual>(() => resolveStoredTheme(getStoredAuthUser()))
 
   useEffect(() => {
     applyThemeToDocument(tema)
@@ -61,7 +68,7 @@ export function TemaProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const syncFromStorage = () => {
-      const storedTheme = resolveStoredTheme(sessionStorage.getItem('authUser'))
+      const storedTheme = resolveStoredTheme(getStoredAuthUser())
       setTema(storedTheme)
     }
 

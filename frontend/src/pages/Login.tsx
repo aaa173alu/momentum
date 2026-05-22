@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { loginUser } from '../services/api'
+import { buildStoredAuthUser, loginUser } from '../services/api'
 import { logoMAsset } from '../img'
 
 function Login() {
@@ -22,7 +22,8 @@ function Login() {
       if (response.refreshToken) {
         sessionStorage.setItem('refreshToken', response.refreshToken)
       }
-      sessionStorage.setItem('authUser', JSON.stringify(response.user))
+      sessionStorage.setItem('authUser', JSON.stringify(buildStoredAuthUser(response.user)))
+      localStorage.removeItem('authUser')
       window.dispatchEvent(new Event('authUserChanged'))
       // respect redirectTo from location.state if present
       const state = (location as any).state as { redirectTo?: string } | null

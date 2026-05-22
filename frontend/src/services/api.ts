@@ -41,6 +41,11 @@ export type ApiUserPreferences = {
   easyReadMode?: boolean
 }
 
+export type StoredAuthUser = {
+  _id: string
+  preferences?: ApiUserPreferences
+}
+
 export type ApiMediaItem = {
   _id?: string
   type?: 'image' | 'video' | 'audio' | 'file' | '3d'
@@ -149,6 +154,13 @@ export type UploadModel3DResponse = {
   fileUrl: string
   thumbnailUrl?: string
   modelFormat?: '' | 'glb' | 'gltf' | 'obj' | 'fbx' | 'stl'
+}
+
+export function buildStoredAuthUser(user: ApiUser): StoredAuthUser {
+  return {
+    _id: user._id,
+    preferences: user.preferences ? { ...user.preferences } : undefined,
+  }
 }
 
 export type ApiCapsuleModel = {

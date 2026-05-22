@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import HeaderConAtras from '../components/HeaderConAtras'
-import { fetchCurrentUser, updateCurrentUserPreferences, type ApiUserPreferences } from '../services/api'
+import { buildStoredAuthUser, fetchCurrentUser, updateCurrentUserPreferences, type ApiUserPreferences } from '../services/api'
 import { applyUserPreferences, normalizeUserPreferences, type NormalizedUserPreferences } from '../services/userPreferences'
 import { useTranslate } from '../services/useTranslate'
 
@@ -61,7 +61,8 @@ function SettingsPreferencesPage() {
         const updatedPrefs = normalizeUserPreferences(updatedUser.preferences)
         setOriginalPrefs(updatedPrefs)
         setPrefs(updatedPrefs)
-        sessionStorage.setItem('authUser', JSON.stringify(updatedUser))
+        sessionStorage.setItem('authUser', JSON.stringify(buildStoredAuthUser(updatedUser)))
+        localStorage.removeItem('authUser')
         applyUserPreferences(updatedPrefs)
         window.dispatchEvent(new Event('authUserChanged'))
         window.dispatchEvent(new Event('preferencesUpdated'))
